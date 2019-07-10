@@ -1,6 +1,12 @@
+import java.awt.Component
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
+import javax.imageio.ImageIO
+import javax.swing.ImageIcon
+import javax.swing.JLabel
+import javax.swing.JList
+import javax.swing.JTextArea
 
 interface IFileList {
     fun goBack() //Task<IFileList>
@@ -14,8 +20,8 @@ interface IPreview {
     fun getMimeType(): String
     fun getContents(): File
     fun getFileList(): List<String>
-    fun getParentObject(): IFileList
     fun getName(): String
+    fun getDrawable() : Component
 }
 
 class LocalFileList(var curPath: Path) : IFileList {
@@ -36,7 +42,7 @@ class LocalFileList(var curPath: Path) : IFileList {
     }
 
     override fun getPreview(file: String): IPreview {
-        return LocalPreviewer(this, curPath.resolve(file))
+        return LocalPreviewer(curPath.resolve(file))
     }
 
     override fun getCurrentDir(): String {
@@ -48,31 +54,36 @@ class LocalFileList(var curPath: Path) : IFileList {
     }
 }
 
-class LocalPreviewer(val parent: IFileList, val path: Path) : IPreview {
-//    init {
-//        path = path.toAbsolutePath()
-//    }
+class LocalPreviewer(path: Path) : IPreview {
+    val path = path.toAbsolutePath()
 
     override fun getName(): String {
-        return path.toAbsolutePath().toString()
+        return path.toString()
     }
 
     override fun getFileList(): List<String> {
-        return path.toAbsolutePath().toFile().listFiles().map { file -> file.name }
-    }
-
-    // can't name it getParent, JVM gives an error "method exists"
-    override fun getParentObject(): IFileList {
-        return parent
+        return path.toFile().listFiles().map { file -> file.name }
     }
 
     override fun getMimeType(): String {
         if (path.endsWith(".kt")) return "text"
-        if (path.toAbsolutePath().toFile().isDirectory) return "directory"
-        return Files.probeContentType(path.toAbsolutePath())?.substringBefore('/') ?: "unknown"
+        if (path.toFile().isDirectory) return "directory"
+        return Files.probeContentType(path)?.substringBefore('/') ?: "unknown"
     }
 
     override fun getContents(): File {
         return path.toFile()
+    }
+
+    override fun getDrawable(): Component {
+        // how to manage exceptions better?
+        // we want to give last option anyway
+
+        return when (this.getMimeType()) {
+            "directory" -> JList(this.getFileList().toTypedArray())
+            "image" -> JLabel(ImageIcon(ImageIO.read(this.getContents())))
+            "text" -> JTextArea(this.getContents().readText())
+            else -> JLabel(this.getName())
+        }
     }
 }

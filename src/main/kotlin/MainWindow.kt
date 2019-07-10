@@ -38,11 +38,12 @@ class MainWindow(private val fileList: IFileList) : JFrame("Best file manager ev
     }
 
     internal fun initLeft(): JList<String> {
-        return Drawer().getDrawable(fileList.getPreview(fileList.getCurrentDir())) as JList<String>
+        // hate this place and do not know how to get rid of it
+        return fileList.getPreview(fileList.getCurrentDir()).getDrawable() as JList<String>
     }
 
     internal fun initRight(path: String): Component {
-        return Drawer().getDrawable(fileList.getPreview(path))
+        return fileList.getPreview(path).getDrawable()
     }
 
     internal fun createFolderForm() {
@@ -55,7 +56,7 @@ class MainWindow(private val fileList: IFileList) : JFrame("Best file manager ev
 
         // ide created me this lambda
         left.addListSelectionListener {
-            right = Drawer().getDrawable(fileList.getPreview(left.selectedValue))
+            right = fileList.getPreview(left.selectedValue).getDrawable()
             if (mainForm.componentCount > 1) {
                 mainForm.remove(1)
             }
