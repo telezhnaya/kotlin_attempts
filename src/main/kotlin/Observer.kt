@@ -5,7 +5,6 @@ import java.nio.file.Path
 interface IFileList {
     fun goBack() //Task<IFileList>
     fun goForward(path: String): Boolean //Task<IFileList>
-    fun getFileList(): List<String>
     fun getPreview(file: String): IPreview
     fun getCurrentDir(): String
     fun getFirst(): String
@@ -14,6 +13,7 @@ interface IFileList {
 interface IPreview {
     fun getMimeType(): String
     fun getContents(): File
+    fun getFileList(): List<String>
     fun getParentObject(): IFileList
     fun getName(): String
 }
@@ -28,16 +28,11 @@ class LocalFileList(var curPath: Path) : IFileList {
     }
 
     override fun goForward(path: String): Boolean {
-        return try {
+        if (curPath.resolve(path).toAbsolutePath().toFile().isDirectory) {
             curPath = curPath.resolve(path)
-            true
-        } catch (e: Exception) {
-            false
+            return true
         }
-    }
-
-    override fun getFileList(): List<String> {
-        return curPath.toFile().listFiles().map { file -> file.name }
+        return false
     }
 
     override fun getPreview(file: String): IPreview {
@@ -60,6 +55,10 @@ class LocalPreviewer(val parent: IFileList, val path: Path) : IPreview {
 
     override fun getName(): String {
         return path.toAbsolutePath().toString()
+    }
+
+    override fun getFileList(): List<String> {
+        return path.toAbsolutePath().toFile().listFiles().map { file -> file.name }
     }
 
     // can't name it getParent, JVM gives an error "method exists"

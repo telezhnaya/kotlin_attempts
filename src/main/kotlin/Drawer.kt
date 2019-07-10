@@ -1,4 +1,5 @@
 import java.awt.Component
+import java.io.File
 import javax.imageio.ImageIO
 import javax.swing.ImageIcon
 import javax.swing.JLabel
@@ -15,7 +16,7 @@ class Drawer : IDrawable {
         // we want to give last option anyway
 
         return when (preview.getMimeType()) {
-            "directory" -> JList(preview.getParentObject().getFileList().toTypedArray())
+            "directory" -> JList(preview.getFileList().toTypedArray())
             "image" -> JLabel(ImageIcon(ImageIO.read(preview.getContents())))
             "text" -> JTextArea(preview.getContents().readText())
             else -> JLabel(preview.getName())
