@@ -1,3 +1,5 @@
+package observer
+
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Image
@@ -6,18 +8,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import javax.imageio.ImageIO
 import javax.swing.*
-
-interface IFileList {
-    fun goBack() //Task<IFileList>
-    fun goForward(path: String): Boolean //Task<IFileList>
-    fun getPreview(file: String): IPreview
-    fun getCurrentDir(): String
-}
-
-interface IPreview {
-    fun getFileList(): List<String>
-    fun getDrawable(dimension: Dimension): Component
-}
 
 class LocalFileList(var curPath: Path) : IFileList {
     init {
@@ -51,15 +41,15 @@ class LocalPreviewer(path: Path) : IPreview {
     override fun getDrawable(dimension: Dimension): Component {
         // how to manage exceptions better?
         // we want to give last option anyway
-        return when (this.getMimeType()) {
-            "directory" -> JScrollPane(JList(this.getFileList().toTypedArray()))
+        return when (getMimeType()) {
+            "directory" -> JScrollPane(JList(getFileList().toTypedArray()))
             "image" -> {
-                val img = ImageIO.read(this.getContents())
+                val img = ImageIO.read(getContents())
                 val imgDimension = getScaledDimension(Dimension(img.width, img.height), dimension)
                 JLabel(ImageIcon(img.getScaledInstance(imgDimension.width, imgDimension.height, Image.SCALE_SMOOTH)))
             }
-            "text" -> JScrollPane(JTextArea(this.getContents().readText()))
-            else -> JScrollPane(JLabel(this.getName()))
+            "text" -> JScrollPane(JTextArea(getContents().readText()))
+            else -> JScrollPane(JLabel(getName()))
         }
     }
 

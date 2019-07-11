@@ -1,3 +1,4 @@
+import observer.IFileList
 import java.awt.Component
 import java.awt.Container
 import java.awt.GridLayout
@@ -31,7 +32,7 @@ class MainWindow(private val fileList: IFileList) : JFrame("Best file manager ev
 //        settings.preferredSize = Dimension(10, 50)
 //        mainForm.add(settings)
 
-        fillLeftForm(fileList.getPreview(fileList.getCurrentDir()).getFileList())
+        fillLeftForm(fileList.getPreview("").getFileList())
         left = JList(leftData)
         initLeftComponent()
         mainForm.add(JScrollPane(left))
@@ -72,7 +73,7 @@ class MainWindow(private val fileList: IFileList) : JFrame("Best file manager ev
                     KeyEvent.VK_LEFT -> {
                         val cur = fileList.getCurrentDir()
                         fileList.goBack()
-                        fillLeftForm(fileList.getPreview(fileList.getCurrentDir()).getFileList())
+                        fillLeftForm(fileList.getPreview("").getFileList())
                         right = fileList.getPreview(cur).getDrawable(right.size)
                         reloadRightForm()
                     }
@@ -84,7 +85,7 @@ class MainWindow(private val fileList: IFileList) : JFrame("Best file manager ev
     private fun openDirectory() {
         if (left.selectedValue == null || !fileList.goForward(left.selectedValue)) return
 
-        fillLeftForm(fileList.getPreview(fileList.getCurrentDir()).getFileList())
+        fillLeftForm(fileList.getPreview("").getFileList())
         left.selectedIndex = 0
         right = fileList.getPreview(leftData[0]).getDrawable(right.size)
         reloadRightForm()
