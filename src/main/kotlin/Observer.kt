@@ -1,12 +1,11 @@
 import java.awt.Component
+import java.awt.Dimension
+import java.awt.Image
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import javax.imageio.ImageIO
-import javax.swing.ImageIcon
-import javax.swing.JLabel
-import javax.swing.JList
-import javax.swing.JTextArea
+import javax.swing.*
 
 interface IFileList {
     fun goBack() //Task<IFileList>
@@ -17,7 +16,7 @@ interface IFileList {
 
 interface IPreview {
     fun getFileList(): List<String>
-    fun getDrawable(): Component
+    fun getDrawable(dimension: Dimension): Component
 }
 
 class LocalFileList(var curPath: Path) : IFileList {
@@ -49,15 +48,18 @@ class LocalFileList(var curPath: Path) : IFileList {
 class LocalPreviewer(path: Path) : IPreview {
     val path = path.toAbsolutePath()
 
-    override fun getDrawable(): Component {
+    override fun getDrawable(dimension: Dimension): Component {
         // how to manage exceptions better?
         // we want to give last option anyway
-
         return when (this.getMimeType()) {
-            "directory" -> JList(this.getFileList().toTypedArray())
-            "image" -> JLabel(ImageIcon(ImageIO.read(this.getContents())))
-            "text" -> JTextArea(this.getContents().readText())
-            else -> JLabel(this.getName())
+            "directory" -> JScrollPane(JList(this.getFileList().toTypedArray()))
+            "image" -> {
+                val img = ImageIO.read(this.getContents())
+                val imgDimension = getScaledDimension(Dimension(img.width, img.height), dimension)
+                JLabel(ImageIcon(img.getScaledInstance(imgDimension.width, imgDimension.height, Image.SCALE_SMOOTH)))
+            }
+            "text" -> JScrollPane(JTextArea(this.getContents().readText()))
+            else -> JScrollPane(JLabel(this.getName()))
         }
     }
 
@@ -78,5 +80,13 @@ class LocalPreviewer(path: Path) : IPreview {
 
     private fun getContents(): File {
         return path.toFile()
+    }
+
+    private fun getScaledDimension(img: Dimension, boundary: Dimension): Dimension {
+        val widthRatio = boundary.getWidth() / img.getWidth()
+        val heightRatio = boundary.getHeight() / img.getHeight()
+        val ratio = Math.min(widthRatio, heightRatio)
+
+        return Dimension((img.width * ratio).toInt(), (img.height * ratio).toInt())
     }
 }

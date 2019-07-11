@@ -1,14 +1,13 @@
 import java.awt.Component
 import java.awt.Container
 import java.awt.GridLayout
+import java.awt.Toolkit
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import javax.swing.DefaultListModel
-import javax.swing.JFrame
-import javax.swing.JList
-import javax.swing.ListSelectionModel
+import javax.swing.*
+
 
 class MainWindow(private val fileList: IFileList) : JFrame("Best file manager ever (or not)") {
     private val mainForm: Container
@@ -19,8 +18,9 @@ class MainWindow(private val fileList: IFileList) : JFrame("Best file manager ev
     private var right: Component
 
     init {
-        // TODO make size depends on screen size
-        this.setBounds(100, 100, 1000, 500)
+        val screen = Toolkit.getDefaultToolkit().screenSize
+        // window will be centered and take 2/3 of screen
+        this.setBounds(screen.width / 6, screen.height / 6, screen.width / 3 * 2, screen.height / 3 * 2)
         this.defaultCloseOperation = JFrame.EXIT_ON_CLOSE
 
         mainForm = this.contentPane
@@ -33,12 +33,10 @@ class MainWindow(private val fileList: IFileList) : JFrame("Best file manager ev
 
         fillLeftForm(fileList.getPreview(fileList.getCurrentDir()).getFileList())
         left = JList(leftData)
-        //val listScroller = JScrollPane(left);
-        //listScroller.setPreferredSize(new Dimension(250, 80));
         initLeftComponent()
-        mainForm.add(left)
+        mainForm.add(JScrollPane(left))
 
-        right = fileList.getPreview(leftData[0]).getDrawable()
+        right = fileList.getPreview(leftData[0]).getDrawable(left.size) // TODO get rid of left here
         mainForm.add(right)
     }
 
@@ -53,7 +51,7 @@ class MainWindow(private val fileList: IFileList) : JFrame("Best file manager ev
 
         left.addListSelectionListener {
             if (left.selectedIndex != -1) {
-                right = fileList.getPreview(left.selectedValue).getDrawable()
+                right = fileList.getPreview(left.selectedValue).getDrawable(right.size)
                 reloadRightForm()
             }
         }
@@ -75,7 +73,7 @@ class MainWindow(private val fileList: IFileList) : JFrame("Best file manager ev
                         val cur = fileList.getCurrentDir()
                         fileList.goBack()
                         fillLeftForm(fileList.getPreview(fileList.getCurrentDir()).getFileList())
-                        right = fileList.getPreview(cur).getDrawable()
+                        right = fileList.getPreview(cur).getDrawable(right.size)
                         reloadRightForm()
                     }
                 }
@@ -84,11 +82,11 @@ class MainWindow(private val fileList: IFileList) : JFrame("Best file manager ev
     }
 
     private fun openDirectory() {
-        if (!fileList.goForward(left.selectedValue)) return
+        if (left.selectedValue == null || !fileList.goForward(left.selectedValue)) return
 
         fillLeftForm(fileList.getPreview(fileList.getCurrentDir()).getFileList())
         left.selectedIndex = 0
-        right = fileList.getPreview(leftData[0]).getDrawable()
+        right = fileList.getPreview(leftData[0]).getDrawable(right.size)
         reloadRightForm()
     }
 
@@ -97,6 +95,6 @@ class MainWindow(private val fileList: IFileList) : JFrame("Best file manager ev
             mainForm.remove(1)
         }
         mainForm.add(right)
-        right.revalidate()
+        mainForm.revalidate()
     }
 }
