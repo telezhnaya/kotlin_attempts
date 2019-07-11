@@ -5,13 +5,17 @@ import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import javax.swing.DefaultListModel
 import javax.swing.JFrame
 import javax.swing.JList
 import javax.swing.ListSelectionModel
 
 class MainWindow(private val fileList: IFileList) : JFrame("Best file manager ever (or not)") {
     private val mainForm: Container
-    private var left: JList<String>
+
+    private val left: JList<String>
+    private val leftData = DefaultListModel<String>()
+
     private var right: Component
 
     init {
@@ -27,41 +31,31 @@ class MainWindow(private val fileList: IFileList) : JFrame("Best file manager ev
 //        settings.preferredSize = Dimension(10, 50)
 //        mainForm.add(settings)
 
-        left = initLeft()
-        right = initRight(fileList.getFirst())
-        createFolderForm()
-
-        // TODO add slider here and in the preview
+        fillLeftForm(fileList.getPreview(fileList.getCurrentDir()).getFileList())
+        left = JList(leftData)
+        //val listScroller = JScrollPane(left);
+        //listScroller.setPreferredSize(new Dimension(250, 80));
+        initLeftComponent()
         mainForm.add(left)
+
+        right = fileList.getPreview(leftData[0]).getDrawable()
         mainForm.add(right)
-
     }
 
-    internal fun initLeft(): JList<String> {
-        // hate this place and do not know how to get rid of it
-        return fileList.getPreview(fileList.getCurrentDir()).getDrawable() as JList<String>
+    private fun fillLeftForm(files: List<String>) {
+        leftData.removeAllElements()
+        leftData.add(0, "..")
+        leftData.addAll(files)
     }
 
-    internal fun initRight(path: String): Component {
-        return fileList.getPreview(path).getDrawable()
-    }
-
-    internal fun createFolderForm() {
-        // TODO fix selection (i want both mouse and arrows/enter)
-
-        //left.selectedIndex = 0
-
+    private fun initLeftComponent() {
         left.selectionMode = ListSelectionModel.SINGLE_SELECTION
-        //left.selectionModel.setSelectionInterval(0, 0)
 
-        // ide created me this lambda
         left.addListSelectionListener {
-            right = fileList.getPreview(left.selectedValue).getDrawable()
-            if (mainForm.componentCount > 1) {
-                mainForm.remove(1)
+            if (left.selectedIndex != -1) {
+                right = fileList.getPreview(left.selectedValue).getDrawable()
+                reloadRightForm()
             }
-            mainForm.add(right)
-            mainForm.revalidate()
         }
 
         left.addMouseListener(object : MouseAdapter() {
@@ -74,34 +68,35 @@ class MainWindow(private val fileList: IFileList) : JFrame("Best file manager ev
 
         left.addKeyListener(object : KeyAdapter() {
             override fun keyReleased(ke: KeyEvent) {
-                if (ke.keyCode == KeyEvent.VK_RIGHT) {
-                    openDirectory()
-                } else if (ke.keyCode == KeyEvent.VK_LEFT) {
-                    val cur = fileList.getCurrentDir()
-                    fileList.goBack()
-                    left = initLeft()
-                    right = initRight(cur)
-                    refresh()
+                when (ke.keyCode) {
+                    KeyEvent.VK_RIGHT -> openDirectory()
+                    KeyEvent.VK_ENTER -> openDirectory()
+                    KeyEvent.VK_LEFT -> {
+                        val cur = fileList.getCurrentDir()
+                        fileList.goBack()
+                        fillLeftForm(fileList.getPreview(fileList.getCurrentDir()).getFileList())
+                        right = fileList.getPreview(cur).getDrawable()
+                        reloadRightForm()
+                    }
                 }
             }
         })
     }
 
-    internal fun openDirectory() {
+    private fun openDirectory() {
         if (!fileList.goForward(left.selectedValue)) return
 
-        left = initLeft()
-        right = initRight(fileList.getFirst())
-        refresh()
+        fillLeftForm(fileList.getPreview(fileList.getCurrentDir()).getFileList())
+        left.selectedIndex = 0
+        right = fileList.getPreview(leftData[0]).getDrawable()
+        reloadRightForm()
     }
 
-    internal fun refresh() {
-        mainForm.removeAll()
-        createFolderForm()
-        mainForm.add(left)
+    private fun reloadRightForm() {
+        while (mainForm.componentCount > 1) {
+            mainForm.remove(1)
+        }
         mainForm.add(right)
-        mainForm.revalidate()
+        right.revalidate()
     }
-
 }
-
