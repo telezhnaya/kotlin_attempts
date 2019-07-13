@@ -32,8 +32,12 @@ class LocalFileList(var curPath: Path) : IFileList {
         return LocalPreviewer(curPath.resolve(file))
     }
 
-    override fun getCurrentDir(): String {
+    override fun getFullPath(): String {
         return curPath.toString()
+    }
+
+    override fun getCurrentFileName(): String {
+        return curPath.toFile().name
     }
 }
 

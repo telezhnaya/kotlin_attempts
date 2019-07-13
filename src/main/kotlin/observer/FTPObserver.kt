@@ -23,11 +23,15 @@ class FTPFileList(val client: FTPClient, lazyLoad: Boolean = true) : IFileList {
     }
 
     override fun getPreview(file: String): IPreview {
-        return FTPPreviewer(client, file)
+        return FTPPreviewer(client, File(client.printWorkingDirectory()).resolve(file).path)
     }
 
-    override fun getCurrentDir(): String {
+    override fun getFullPath(): String {
         return client.printWorkingDirectory()
+    }
+
+    override fun getCurrentFileName(): String {
+        return File(client.printWorkingDirectory()).name
     }
 }
 

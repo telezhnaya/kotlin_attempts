@@ -12,6 +12,7 @@ import javax.swing.JScrollPane
 // TODO check for empty archives, archives in archives
 class ZipFileList(zipPath: Path, private val parent: IFileList) : IFileList {
     private val zipFile = ZipFile(zipPath.toFile())
+    private val zipName = zipPath.fileName.toString()
     private var currentPath = ""
 
     override fun goBack(): IFileList {
@@ -32,8 +33,12 @@ class ZipFileList(zipPath: Path, private val parent: IFileList) : IFileList {
         return if (path != "..") ZipPreviewer(zipFile, path) else parent.getPreview("")
     }
 
-    override fun getCurrentDir(): String {
-        return File(currentPath).absolutePath
+    override fun getFullPath(): String {
+        return File(zipName).resolve(currentPath).absolutePath
+    }
+
+    override fun getCurrentFileName(): String {
+        return if (currentPath.isEmpty()) zipName else File(currentPath).name
     }
 }
 

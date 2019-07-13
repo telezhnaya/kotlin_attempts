@@ -27,7 +27,7 @@ class MainWindow(private var fileList: IFileList) : JFrame("Best file manager ev
         settingsLayout.layout = GridBagLayout()
         pathsAndPreviewLayout.layout = GridLayout(1, 2, 5, 0)
 
-        currentPath = JLabel(fileList.getCurrentDir())
+        currentPath = JLabel(fileList.getFullPath())
         settingsLayout.add(currentPath, createGridBagConstraints(0, 0, 1.0, 0.0))
 
         val settingsButton = JButton("Settings")
@@ -91,11 +91,13 @@ class MainWindow(private var fileList: IFileList) : JFrame("Best file manager ev
                     KeyEvent.VK_RIGHT -> openDirectoryPath()
                     KeyEvent.VK_ENTER -> openDirectoryPath()
                     KeyEvent.VK_LEFT -> {
-                        val cur = fileList.getCurrentDir()
+                        val cur = fileList.getCurrentFileName()
                         fileList = fileList.goBack()
                         fillPathsForm(fileList.getPreview("").getFileList())
                         preview = fileList.getPreview(cur).getDrawable(preview.size)
                         reloadPreviewForm()
+                        currentPath.text = fileList.getFullPath()
+                        currentPath.revalidate()
                     }
                 }
             }
@@ -110,7 +112,7 @@ class MainWindow(private var fileList: IFileList) : JFrame("Best file manager ev
         paths.selectedIndex = 0
         preview = fileList.getPreview(pathsModel[0]).getDrawable(preview.size)
         reloadPreviewForm()
-        currentPath.text = fileList.getCurrentDir()
+        currentPath.text = fileList.getFullPath()
         currentPath.revalidate()
     }
 
