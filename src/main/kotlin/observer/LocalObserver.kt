@@ -14,16 +14,18 @@ class LocalFileList(var curPath: Path) : IFileList {
         curPath = curPath.toAbsolutePath()
     }
 
-    override fun goBack() {
+    override fun goBack(): IFileList {
         curPath = curPath.parent ?: curPath
+        return this
     }
 
-    override fun goForward(path: String): Boolean {
-        if (curPath.resolve(path).toAbsolutePath().toFile().isDirectory) {
+    override fun goForward(path: String): IFileList {
+        if (path == "..") return goBack()
+        if (path.endsWith(".zip"))
+            return ZipFileList(curPath.resolve(path), this)
+        if (curPath.resolve(path).toAbsolutePath().toFile().isDirectory)
             curPath = curPath.resolve(path)
-            return true
-        }
-        return false
+        return this
     }
 
     override fun getPreview(file: String): IPreview {
@@ -41,8 +43,10 @@ class LocalPreviewer(path: Path) : IPreview {
     override fun getDrawable(dimension: Dimension): Component {
         // how to manage exceptions better?
         // we want to give last option anyway
-        return when (getMimeType()) {
+        val a = getMimeType()
+        return when (a) {
             "directory" -> JScrollPane(JList(getFileList().toTypedArray()))
+            "zip" -> ZipPreviewer(path.toFile()).getDrawable(dimension)
             "image" -> {
                 val img = ImageIO.read(getContents())
                 val imgDimension = getScaledDimension(Dimension(img.width, img.height), dimension)
@@ -63,7 +67,8 @@ class LocalPreviewer(path: Path) : IPreview {
     }
 
     private fun getMimeType(): String {
-        if (path.endsWith(".kt")) return "text"
+        if (path.toString().endsWith(".kt")) return "text"
+        if (path.toString().endsWith(".zip")) return "zip" // probeContentType gives application/zip
         if (path.toFile().isDirectory) return "directory"
         return Files.probeContentType(path)?.substringBefore('/') ?: "unknown"
     }

@@ -9,13 +9,17 @@ import javax.swing.JList
 import javax.swing.JScrollPane
 
 
+// TODO support zip
 class FTPFileList(val client: FTPClient, lazyLoad: Boolean = true) : IFileList {
-    override fun goBack() {
+    override fun goBack(): IFileList {
         client.changeToParentDirectory()
+        return this
     }
 
-    override fun goForward(path: String): Boolean {
-        return client.changeWorkingDirectory(path)
+    override fun goForward(path: String): IFileList {
+        if (path == "..") return goBack()
+        client.changeWorkingDirectory(path)
+        return this
     }
 
     override fun getPreview(file: String): IPreview {

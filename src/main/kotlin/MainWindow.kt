@@ -10,7 +10,7 @@ import java.awt.event.MouseEvent
 import javax.swing.*
 
 
-class MainWindow(private val fileList: IFileList) : JFrame("Best file manager ever (or not)") {
+class MainWindow(private var fileList: IFileList) : JFrame("Best file manager ever (or not)") {
     private val mainForm: Container
 
     private val left: JList<String>
@@ -72,7 +72,7 @@ class MainWindow(private val fileList: IFileList) : JFrame("Best file manager ev
                     KeyEvent.VK_ENTER -> openDirectory()
                     KeyEvent.VK_LEFT -> {
                         val cur = fileList.getCurrentDir()
-                        fileList.goBack()
+                        fileList = fileList.goBack()
                         fillLeftForm(fileList.getPreview("").getFileList())
                         right = fileList.getPreview(cur).getDrawable(right.size)
                         reloadRightForm()
@@ -83,8 +83,9 @@ class MainWindow(private val fileList: IFileList) : JFrame("Best file manager ev
     }
 
     private fun openDirectory() {
-        if (left.selectedValue == null || !fileList.goForward(left.selectedValue)) return
+        if (left.selectedValue == null) return
 
+        fileList = fileList.goForward(left.selectedValue)
         fillLeftForm(fileList.getPreview("").getFileList())
         left.selectedIndex = 0
         right = fileList.getPreview(leftData[0]).getDrawable(right.size)
