@@ -5,6 +5,7 @@ import java.awt.Dimension
 import java.io.File
 import java.nio.file.Path
 import java.util.zip.ZipFile
+import javax.swing.JLabel
 import javax.swing.JList
 import javax.swing.JScrollPane
 
@@ -59,6 +60,8 @@ class ZipPreviewer : IPreview {
     override fun getDrawable(dimension: Dimension): Component {
         if (isDirectory())
             return JScrollPane(JList(getFileList().toTypedArray()))
+        if (path.endsWith(".zip")) // do not support zip into zip, many side effects
+            return JLabel(path)
         val entry = zipFile.getEntry(path)
         val f = File.createTempFile("morethanthree", File(entry.name).name)
         zipFile.getInputStream(entry).copyTo(f.outputStream())

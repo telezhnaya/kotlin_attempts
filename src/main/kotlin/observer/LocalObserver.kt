@@ -9,7 +9,7 @@ import java.nio.file.Path
 import javax.imageio.ImageIO
 import javax.swing.*
 
-class LocalFileList(var curPath: Path) : IFileList {
+class LocalFileList(private var curPath: Path) : IFileList {
     init {
         curPath = curPath.toAbsolutePath()
     }
@@ -42,7 +42,7 @@ class LocalFileList(var curPath: Path) : IFileList {
 }
 
 class LocalPreviewer(path: Path) : IPreview {
-    val path = path.toAbsolutePath()
+    private val path = path.toAbsolutePath()
 
     override fun getDrawable(dimension: Dimension): Component {
         // how to manage exceptions better?

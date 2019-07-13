@@ -17,8 +17,8 @@ class MainWindow(private var fileList: IFileList) : JFrame("Best file manager ev
 
     init {
         val screen = Toolkit.getDefaultToolkit().screenSize
-        // window will be centered and take 2/3 of screen
-        this.setBounds(screen.width / 6, screen.height / 6, screen.width / 3 * 2, screen.height / 3 * 2)
+        this.size = Dimension(screen.width / 3 * 2, screen.height / 3 * 2)
+        this.setLocationRelativeTo(null)
         this.defaultCloseOperation = JFrame.EXIT_ON_CLOSE
         val mainLayout = this.contentPane
         val settingsLayout = JPanel()
@@ -30,7 +30,11 @@ class MainWindow(private var fileList: IFileList) : JFrame("Best file manager ev
         currentPath = JLabel(fileList.getFullPath())
         settingsLayout.add(currentPath, createGridBagConstraints(0, 0, 1.0, 0.0))
 
-        val settingsButton = JButton("Settings")
+        val settingsButton = JButton("FTP settings")
+        settingsButton.addActionListener {
+            val settingsWindow = SettingsWindow(settingsButton.text, this)
+            settingsWindow.isVisible = true
+        }
         settingsLayout.add(settingsButton, createGridBagConstraints(1, 0, 0.0, 0.0))
         mainLayout.add(settingsLayout, createGridBagConstraints(0, 0, 1.0, 0.0))
 
@@ -43,22 +47,6 @@ class MainWindow(private var fileList: IFileList) : JFrame("Best file manager ev
         preview = fileList.getPreview(pathsModel[0]).getDrawable(paths.size)
         pathsAndPreviewLayout.add(preview)
         mainLayout.add(pathsAndPreviewLayout, createGridBagConstraints(0, 1, 1.0, 1.0))
-    }
-
-    private fun createGridBagConstraints(gridx: Int, gridy: Int, weightx: Double, weighty: Double): GridBagConstraints {
-        return GridBagConstraints(
-            gridx,
-            gridy,
-            1,
-            1,
-            weightx,
-            weighty,
-            10,
-            GridBagConstraints.BOTH,
-            Insets(0, 0, 0, 0),
-            0,
-            0
-        )
     }
 
     private fun fillPathsForm(files: List<String>) {

@@ -9,8 +9,7 @@ import javax.swing.JList
 import javax.swing.JScrollPane
 
 
-// TODO support zip
-class FTPFileList(val client: FTPClient, lazyLoad: Boolean = true) : IFileList {
+class FTPFileList(private val client: FTPClient) : IFileList {
     override fun goBack(): IFileList {
         client.changeToParentDirectory()
         return this
