@@ -11,7 +11,7 @@ interface IFileList {
     fun getCurrentFileName(): String
 
     fun willDownloadHelp(file: String): Boolean
-    fun downloadFile(file: String, destination: String)
+    fun downloadFile(file: String, destination: String) // Task
 }
 
 interface IPreview {

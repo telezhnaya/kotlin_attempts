@@ -1,6 +1,7 @@
 package swing
 
 import observer.FTPFileList
+import org.apache.commons.net.ftp.FTP
 import org.apache.commons.net.ftp.FTPClient
 import java.awt.Dimension
 import java.awt.GridBagLayout
@@ -59,6 +60,7 @@ class SettingsWindow(header: String, parent: JFrame) : JFrame(header) {
             // https://stackoverflow.com/questions/10443308/why-gettext-in-jpasswordfield-was-deprecated
             // Using this library, can't get rid of this insecure line, sorry
             if (client.login(user.text, password.text)) {
+                client.setFileType(FTP.BINARY_FILE_TYPE)
                 val fileList = FTPFileList(client)
                 val app = MainWindow(fileList)
                 app.isVisible = true

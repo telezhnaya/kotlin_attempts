@@ -1,11 +1,14 @@
 package swing
 
 import observer.IFileList
+import observer.LocalFileList
 import java.awt.*
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import java.io.File
+import java.nio.file.Paths
 import javax.swing.*
 
 
@@ -13,8 +16,10 @@ class MainWindow(private var fileList: IFileList) : JFrame("Best file manager ev
     private val currentPath: JLabel
 
     private val pathsAndPreviewLayout = JPanel()
-    private val paths: JList<String>
+    private val settingsLayout = JPanel()
+    private val settingsPathConstraints = createGridBagConstraints(0, 0, 1.0, 0.0)
     private val pathsModel = DefaultListModel<String>()
+    private val paths = JList(pathsModel)
     private var preview: Component
 
     init {
@@ -22,14 +27,48 @@ class MainWindow(private var fileList: IFileList) : JFrame("Best file manager ev
         this.size = Dimension(screen.width / 3 * 2, screen.height / 3 * 2)
         this.setLocationRelativeTo(null)
         val mainLayout = this.contentPane
-        val settingsLayout = JPanel()
 
         mainLayout.layout = GridBagLayout()
         settingsLayout.layout = GridBagLayout()
         pathsAndPreviewLayout.layout = GridLayout(1, 2, 5, 0)
 
         currentPath = JLabel(fileList.getFullPath())
-        settingsLayout.add(currentPath, createGridBagConstraints(0, 0, 1.0, 0.0))
+
+        currentPath.addMouseListener(object : MouseAdapter() {
+            override fun mouseClicked(evt: MouseEvent) {
+                if (evt.clickCount == 2 && fileList is LocalFileList) { // hate this
+                    val newPath = JTextField(currentPath.text)
+                    newPath.addKeyListener(object : KeyAdapter() {
+                        override fun keyReleased(ke: KeyEvent) {
+                            if (ke.keyCode == KeyEvent.VK_ENTER) {
+                                val path = File(newPath.text)
+                                if (!path.isAbsolute || !path.exists()) {
+                                    JOptionPane.showMessageDialog(
+                                        null,
+                                        "Invalid path, try again",
+                                        "Error",
+                                        JOptionPane.PLAIN_MESSAGE
+                                    )
+                                    reloadSettingsForm(newPath, currentPath)
+                                    return
+                                }
+                                currentPath.text = newPath.text
+                                reloadSettingsForm(newPath, currentPath)
+
+                                fileList = LocalFileList(Paths.get(currentPath.text))
+                                fillPathsForm(fileList.getPreview().getFileList())
+                                paths.selectedIndex = 0
+                                preview = fileList.getPreview(pathsModel[0]).getDrawable(paths.size)
+                                reloadPreviewForm()
+                            }
+                        }
+                    })
+                    reloadSettingsForm(currentPath, newPath)
+                }
+            }
+        })
+
+        settingsLayout.add(currentPath, settingsPathConstraints)
 
         val settingsButton = JButton("FTP settings")
         settingsButton.addActionListener {
@@ -41,7 +80,6 @@ class MainWindow(private var fileList: IFileList) : JFrame("Best file manager ev
 
 
         fillPathsForm(fileList.getPreview().getFileList())
-        paths = JList(pathsModel)
         initPathsComponent()
         pathsAndPreviewLayout.add(JScrollPane(paths))
 
@@ -60,7 +98,7 @@ class MainWindow(private var fileList: IFileList) : JFrame("Best file manager ev
         paths.selectionMode = ListSelectionModel.SINGLE_SELECTION
 
         paths.addListSelectionListener {
-            if (paths.selectedIndex != -1) reloadPreview()
+            if (paths.selectedIndex != -1) showPreview()
         }
 
         paths.addMouseListener(object : MouseAdapter() {
@@ -98,10 +136,11 @@ class MainWindow(private var fileList: IFileList) : JFrame("Best file manager ev
         fileList = res
         fillPathsForm(fileList.getPreview().getFileList())
         paths.selectedIndex = 0
-        preview = fileList.getPreview(pathsModel[0]).getDrawable(preview.size)
+        preview = fileList.getPreview(pathsModel[0]).getDrawable(paths.size)
         reloadPreviewForm()
         currentPath.text = fileList.getFullPath()
         currentPath.revalidate()
+        currentPath.repaint()
     }
 
     private fun goBack() {
@@ -111,20 +150,21 @@ class MainWindow(private var fileList: IFileList) : JFrame("Best file manager ev
 
         fileList = res
         fillPathsForm(fileList.getPreview().getFileList())
-        preview = fileList.getPreview(cur).getDrawable(preview.size)
+        preview = fileList.getPreview(cur).getDrawable(paths.size)
         reloadPreviewForm()
         currentPath.text = fileList.getFullPath()
         currentPath.revalidate()
+        currentPath.repaint()
     }
 
-    private fun reloadPreview() {
+    private fun showPreview() {
         preview = if (fileList.willDownloadHelp(paths.selectedValue))
             fileList.getPreview(paths.selectedValue).getDrawable(
                 preview.size,
                 "Click Enter to extract this file"
             )
         else
-            fileList.getPreview(paths.selectedValue).getDrawable(preview.size)
+            fileList.getPreview(paths.selectedValue).getDrawable(paths.size)
 
         reloadPreviewForm()
     }
@@ -135,5 +175,13 @@ class MainWindow(private var fileList: IFileList) : JFrame("Best file manager ev
         }
         pathsAndPreviewLayout.add(preview, 1)
         pathsAndPreviewLayout.revalidate()
+        pathsAndPreviewLayout.repaint()
+    }
+
+    private fun reloadSettingsForm(oldPath: Component, newPath: Component) {
+        settingsLayout.remove(oldPath)
+        settingsLayout.add(newPath, settingsPathConstraints)
+        settingsLayout.revalidate()
+        settingsLayout.repaint()
     }
 }

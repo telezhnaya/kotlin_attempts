@@ -93,7 +93,8 @@ class LocalPreviewer(path: Path) : IPreview {
     }
 
     private fun getMimeType(): String {
-        if (path.toString().endsWith(".kt")) return "text"
+        // main part of the whole project, probeContentType does not know about Kotlin still
+        if (path.toString().endsWith(".kt") || path.toString().endsWith(".kts")) return "text"
         if (path.toString().endsWith(".zip")) return "zip" // probeContentType gives application/zip
         if (path.toFile().isDirectory) return "directory"
         return Files.probeContentType(path)?.substringBefore('/') ?: "unknown"

@@ -16,8 +16,8 @@ class ZipFileList(zipPath: Path, private val parent: IFileList) : IFileList {
     private var currentPath = ""
 
     override fun goBack(): IFileListResult {
-        if (File(currentPath).toPath().nameCount == 1) return IFileListResult(true, parent)
-        currentPath = File(currentPath).parent
+        if (currentPath.isEmpty()) return IFileListResult(true, parent)
+        currentPath = File(currentPath).parent ?: ""
         return IFileListResult(true, this)
     }
 
