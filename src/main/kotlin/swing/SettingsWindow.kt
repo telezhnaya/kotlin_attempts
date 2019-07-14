@@ -1,6 +1,7 @@
+package swing
+
 import observer.FTPFileList
 import org.apache.commons.net.ftp.FTPClient
-import java.awt.Color
 import java.awt.Dimension
 import java.awt.GridBagLayout
 import java.awt.GridLayout
@@ -44,6 +45,7 @@ class SettingsWindow(header: String, parent: JFrame) : JFrame(header) {
             this.dispose()
         }
         buttons.add(cancel)
+
         val submit = JButton("Submit")
         submit.addActionListener {
             val client = FTPClient()
@@ -51,7 +53,7 @@ class SettingsWindow(header: String, parent: JFrame) : JFrame(header) {
             try {
                 client.connect(address.text)
             } catch (e: ConnectException) {
-                showError()
+                showError(error, "Impossible to connect to the server")
                 return@addActionListener
             }
             // https://stackoverflow.com/questions/10443308/why-gettext-in-jpasswordfield-was-deprecated
@@ -63,17 +65,11 @@ class SettingsWindow(header: String, parent: JFrame) : JFrame(header) {
                 parent.dispose()
                 this.dispose()
             } else {
-                showError()
+                showError(error, "Invalid credentials. Please try again")
             }
         }
         buttons.add(submit)
 
         mainContainer.add(buttons, createGridBagConstraints(0, 2, 1.0, 0.0, 2))
-    }
-
-    private fun showError() {
-        error.text = "Invalid credentials. Please try again"
-        error.foreground = Color.RED
-        error.revalidate()
     }
 }

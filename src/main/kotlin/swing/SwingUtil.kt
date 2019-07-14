@@ -1,6 +1,10 @@
+package swing
+
+import java.awt.Color
 import java.awt.Dimension
 import java.awt.GridBagConstraints
 import java.awt.Insets
+import javax.swing.JLabel
 
 fun getScaledDimension(inner: Dimension, boundary: Dimension): Dimension {
     val widthRatio = boundary.getWidth() / inner.getWidth()
@@ -30,4 +34,10 @@ fun createGridBagConstraints(
         0,
         0
     )
+}
+
+fun showError(error: JLabel, text: String) {
+    error.text = text
+    error.foreground = Color.RED
+    error.revalidate()
 }

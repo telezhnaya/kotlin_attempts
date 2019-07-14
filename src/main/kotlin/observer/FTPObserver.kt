@@ -4,21 +4,20 @@ import org.apache.commons.net.ftp.FTPClient
 import java.awt.Component
 import java.awt.Dimension
 import java.io.File
+import java.io.FileNotFoundException
 import javax.swing.JLabel
 import javax.swing.JList
 import javax.swing.JScrollPane
 
 
 class FTPFileList(private val client: FTPClient) : IFileList {
-    override fun goBack(): IFileList {
-        client.changeToParentDirectory()
-        return this
+    override fun goBack(): IFileListResult {
+        return IFileListResult(client.changeToParentDirectory(), this)
     }
 
-    override fun goForward(file: String): IFileList {
+    override fun goForward(file: String): IFileListResult {
         if (file == "..") return goBack()
-        client.changeWorkingDirectory(file)
-        return this
+        return IFileListResult(client.changeWorkingDirectory(file), this)
     }
 
     override fun getPreview(file: String): IPreview {
@@ -31,6 +30,20 @@ class FTPFileList(private val client: FTPClient) : IFileList {
 
     override fun getCurrentFileName(): String {
         return File(client.printWorkingDirectory()).name
+    }
+
+    override fun willDownloadHelp(file: String): Boolean {
+        return client.listFiles(file).size == 1 && file.endsWith(".zip")
+    }
+
+    override fun downloadFile(file: String, destination: String) {
+        if (!File(destination).exists()) throw FileNotFoundException(destination)
+
+        val fileToCreate = File(destination).resolve(file)
+        if (fileToCreate.exists()) throw FileAlreadyExistsException(fileToCreate)
+
+        client.retrieveFileStream(file).copyTo(fileToCreate.outputStream())
+        client.completePendingCommand()
     }
 }
 

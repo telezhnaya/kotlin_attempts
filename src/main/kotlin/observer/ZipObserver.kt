@@ -3,46 +3,65 @@ package observer
 import java.awt.Component
 import java.awt.Dimension
 import java.io.File
+import java.io.FileNotFoundException
 import java.nio.file.Path
 import java.util.zip.ZipFile
 import javax.swing.JLabel
 import javax.swing.JList
 import javax.swing.JScrollPane
 
-
-// TODO check for empty archives, archives in archives
 class ZipFileList(zipPath: Path, private val parent: IFileList) : IFileList {
     private val zipFile = ZipFile(zipPath.toFile())
     private val zipName = zipPath.fileName.toString()
     private var currentPath = ""
 
-    override fun goBack(): IFileList {
-        if (File(currentPath).toPath().nameCount == 1) return parent
+    override fun goBack(): IFileListResult {
+        if (File(currentPath).toPath().nameCount == 1) return IFileListResult(true, parent)
         currentPath = File(currentPath).parent
-        return this
+        return IFileListResult(true, this)
     }
 
-    override fun goForward(file: String): IFileList {
+    override fun goForward(file: String): IFileListResult {
         if (file == "..") return goBack()
-        val newPath = File(currentPath).resolve(file).toString()
-        if (zipFile.getEntry(newPath)?.isDirectory == true) // is it really kotlin way to do this?
-            currentPath = newPath
-        return this
+        val newPath = getPath(file)
+
+        val isPathChanging = zipFile.getEntry(newPath)?.isDirectory == true
+        if (isPathChanging) currentPath = newPath
+        return IFileListResult(isPathChanging, this)
     }
 
     override fun getPreview(file: String): IPreview {
-        val path = File(currentPath).resolve(file).normalize().toString()
+        val path = getPath(file)
         return if (path != "..") ZipPreviewer(zipFile, path) else parent.getPreview("")
     }
 
     override fun getFullPath(): String {
-        return File(zipName).resolve(currentPath).absolutePath
+        return File(zipFile.name).resolve(currentPath).path
     }
 
     override fun getCurrentFileName(): String {
         return if (currentPath.isEmpty()) zipName else File(currentPath).name
     }
+
+    override fun willDownloadHelp(file: String): Boolean {
+        return zipFile.getEntry(getPath(file)) != null && file.endsWith(".zip")
+    }
+
+    override fun downloadFile(file: String, destination: String) {
+        if (!File(destination).exists()) throw FileNotFoundException(destination)
+
+        val fileToCreate = File(destination).resolve(file)
+        if (fileToCreate.exists()) throw FileAlreadyExistsException(fileToCreate)
+
+        val entry = zipFile.getEntry(getPath(file))
+        zipFile.getInputStream(entry).copyTo(fileToCreate.outputStream())
+    }
+
+    private fun getPath(file: String): String {
+        return File(currentPath).resolve(file).normalize().toString()
+    }
 }
+
 
 class ZipPreviewer : IPreview {
     private val zipFile: ZipFile
@@ -61,7 +80,7 @@ class ZipPreviewer : IPreview {
     override fun getDrawable(dimension: Dimension, defaultText: String): Component {
         if (isDirectory())
             return JScrollPane(JList(getFileList().toTypedArray()))
-        if (path.endsWith(".zip")) // do not support zip into zip, many side effects
+        if (path.endsWith(".zip"))
             return JLabel(defaultText)
         return try {
             val entry = zipFile.getEntry(path)

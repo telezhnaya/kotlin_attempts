@@ -1,11 +1,9 @@
 import observer.LocalFileList
+import swing.MainWindow
 import java.nio.file.Paths
 
 
 fun main() {
-    val fileList = LocalFileList(Paths.get(""))
-
-    // TODO threads!!!
-    val app = MainWindow(fileList)
+    val app = MainWindow(LocalFileList(Paths.get("")))
     app.isVisible = true
 }

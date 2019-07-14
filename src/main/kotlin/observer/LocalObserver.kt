@@ -1,10 +1,11 @@
 package observer
 
-import getScaledDimension
+import swing.getScaledDimension
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Image
 import java.io.File
+import java.io.FileNotFoundException
 import java.nio.file.Files
 import java.nio.file.Path
 import javax.imageio.ImageIO
@@ -13,20 +14,22 @@ import javax.swing.*
 class LocalFileList(path: Path) : IFileList {
     private var fullPath = path.toAbsolutePath()
 
-    override fun goBack(): IFileList {
+    override fun goBack(): IFileListResult {
+        val status = fullPath != fullPath.parent
         fullPath = fullPath.parent ?: fullPath
-        return this
+        return IFileListResult(status, this)
     }
 
-    override fun goForward(file: String): IFileList {
+    override fun goForward(file: String): IFileListResult {
         if (file == "..") return goBack()
 
         val newPath = fullPath.resolve(file)
-        if (file.endsWith(".zip")) return ZipFileList(newPath, this)
+        if (file.endsWith(".zip"))
+            return IFileListResult(true, ZipFileList(newPath, this))
 
-        if (newPath.toFile().isDirectory)
-            fullPath = newPath
-        return this
+        val isPathChanging = newPath.toFile().isDirectory
+        if (isPathChanging) fullPath = newPath
+        return IFileListResult(isPathChanging, this)
     }
 
     override fun getPreview(file: String): IPreview {
@@ -40,7 +43,20 @@ class LocalFileList(path: Path) : IFileList {
     override fun getCurrentFileName(): String {
         return fullPath.toFile().name
     }
+
+    override fun willDownloadHelp(file: String): Boolean {
+        return false
+    }
+
+    override fun downloadFile(file: String, destination: String) {
+        if (!File(destination).exists()) throw FileNotFoundException(destination)
+
+        val fileToCreate = fullPath.resolve(file).toFile()
+        if (fileToCreate.exists()) throw FileAlreadyExistsException(fileToCreate)
+        fileToCreate.inputStream().copyTo(File(destination).outputStream())
+    }
 }
+
 
 class LocalPreviewer(path: Path) : IPreview {
     private val path = path.toAbsolutePath()
