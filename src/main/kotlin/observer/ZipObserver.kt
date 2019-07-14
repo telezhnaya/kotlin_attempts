@@ -22,10 +22,11 @@ class ZipFileList(zipPath: Path, private val parent: IFileList) : IFileList {
         return this
     }
 
-    override fun goForward(path: String): IFileList {
-        if (path == "..") return goBack()
-        val newPath = File(currentPath).resolve(path).toString()
-        if (zipFile.getEntry(newPath) != null) currentPath = newPath
+    override fun goForward(file: String): IFileList {
+        if (file == "..") return goBack()
+        val newPath = File(currentPath).resolve(file).toString()
+        if (zipFile.getEntry(newPath) != null)
+            currentPath = newPath
         return this
     }
 
@@ -62,10 +63,14 @@ class ZipPreviewer : IPreview {
             return JScrollPane(JList(getFileList().toTypedArray()))
         if (path.endsWith(".zip")) // do not support zip into zip, many side effects
             return JLabel(path)
-        val entry = zipFile.getEntry(path)
-        val f = File.createTempFile("morethanthree", File(entry.name).name)
-        zipFile.getInputStream(entry).copyTo(f.outputStream())
-        return LocalPreviewer(f.toPath()).getDrawable(dimension)
+        return try {
+            val entry = zipFile.getEntry(path)
+            val f = File.createTempFile("morethanthree", File(entry.name).name)
+            zipFile.getInputStream(entry).copyTo(f.outputStream())
+            LocalPreviewer(f.toPath()).getDrawable(dimension)
+        } catch (e: Exception) {
+            JLabel(path)
+        }
     }
 
     override fun getFileList(): List<String> {
@@ -79,6 +84,6 @@ class ZipPreviewer : IPreview {
     }
 
     private fun isDirectory(): Boolean {
-        return path == "" || zipFile.getEntry(path).isDirectory
+        return path.isEmpty() || zipFile.getEntry(path).isDirectory
     }
 }

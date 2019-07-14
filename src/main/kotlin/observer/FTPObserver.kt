@@ -15,14 +15,14 @@ class FTPFileList(private val client: FTPClient) : IFileList {
         return this
     }
 
-    override fun goForward(path: String): IFileList {
-        if (path == "..") return goBack()
-        client.changeWorkingDirectory(path)
+    override fun goForward(file: String): IFileList {
+        if (file == "..") return goBack()
+        client.changeWorkingDirectory(file)
         return this
     }
 
     override fun getPreview(file: String): IPreview {
-        return FTPPreviewer(client, File(client.printWorkingDirectory()).resolve(file).path)
+        return FTPPreviewer(client, file)
     }
 
     override fun getFullPath(): String {
@@ -34,27 +34,30 @@ class FTPFileList(private val client: FTPClient) : IFileList {
     }
 }
 
-class FTPPreviewer(private val client: FTPClient, private val path: String) : IPreview {
+
+class FTPPreviewer(private val client: FTPClient, private val localPath: String) : IPreview {
     override fun getDrawable(dimension: Dimension): Component {
-        if (isDirectory()) return JScrollPane(JList(getFileList().toTypedArray()))
+        if (isDirectory())
+            return JScrollPane(JList(getFileList().toTypedArray()))
+
+        if (localPath.endsWith(".zip"))
+            return JLabel(localPath)
 
         return try {
-            val file = File.createTempFile("morethanthree", path)
-            client.retrieveFileStream(path).copyTo(file.outputStream())
-            // why it was not anywhere except chinese site on 3rd google page???
-            client.completePendingCommand() // will not work without this line
+            val file = File.createTempFile("morethanthree", localPath)
+            client.retrieveFileStream(localPath).copyTo(file.outputStream())
+            client.completePendingCommand()
             LocalPreviewer(file.toPath()).getDrawable(dimension)
         } catch (e: Exception) {
-            // whatever will go wrong, we can't do anything with that
-            JScrollPane(JLabel(path))
+            JScrollPane(JLabel(localPath))
         }
     }
 
     override fun getFileList(): List<String> {
-        return client.listFiles(path).map { file -> file.name }
+        return client.listFiles(localPath).map { file -> file.name }
     }
 
     private fun isDirectory(): Boolean {
-        return path == ".." || (client.changeWorkingDirectory(path) && client.changeToParentDirectory())
+        return localPath == ".." || (client.changeWorkingDirectory(localPath) && client.changeToParentDirectory())
     }
 }

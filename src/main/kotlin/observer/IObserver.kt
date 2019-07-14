@@ -5,7 +5,7 @@ import java.awt.Dimension
 
 interface IFileList {
     fun goBack(): IFileList //Task<observer.IFileList>
-    fun goForward(path: String): IFileList //Task<observer.IFileList>
+    fun goForward(file: String): IFileList //Task<observer.IFileList>
     fun getPreview(file: String): IPreview
     fun getFullPath(): String
     fun getCurrentFileName(): String

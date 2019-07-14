@@ -54,6 +54,8 @@ class SettingsWindow(header: String, parent: JFrame) : JFrame(header) {
                 showError()
                 return@addActionListener
             }
+            // https://stackoverflow.com/questions/10443308/why-gettext-in-jpasswordfield-was-deprecated
+            // Using this library, can't get rid of this insecure line, sorry
             if (client.login(user.text, password.text)) {
                 val fileList = FTPFileList(client)
                 val app = MainWindow(fileList)
@@ -67,7 +69,6 @@ class SettingsWindow(header: String, parent: JFrame) : JFrame(header) {
         buttons.add(submit)
 
         mainContainer.add(buttons, createGridBagConstraints(0, 2, 1.0, 0.0, 2))
-
     }
 
     private fun showError() {

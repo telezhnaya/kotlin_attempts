@@ -67,9 +67,8 @@ class MainWindow(private var fileList: IFileList) : JFrame("Best file manager ev
 
         paths.addMouseListener(object : MouseAdapter() {
             override fun mouseClicked(evt: MouseEvent) {
-                if (evt.clickCount == 2) {
+                if (evt.clickCount == 2)
                     openDirectoryPath()
-                }
             }
         })
 
