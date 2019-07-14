@@ -45,11 +45,11 @@ class LocalFileList(path: Path) : IFileList {
 class LocalPreviewer(path: Path) : IPreview {
     private val path = path.toAbsolutePath()
 
-    override fun getDrawable(dimension: Dimension): Component {
+    override fun getDrawable(dimension: Dimension, defaultText: String): Component {
         return try {
             when (getMimeType()) {
                 "directory" -> JScrollPane(JList(getFileList().toTypedArray()))
-                "zip" -> ZipPreviewer(path.toFile()).getDrawable(dimension)
+                "zip" -> ZipPreviewer(path.toFile()).getDrawable(dimension, defaultText)
                 "image" -> {
                     val img = ImageIO.read(path.toFile())
                     val imgDimension = getScaledDimension(Dimension(img.width, img.height), dimension)
@@ -64,10 +64,10 @@ class LocalPreviewer(path: Path) : IPreview {
                     )
                 }
                 "text" -> JScrollPane(JTextArea(path.toFile().readText()))
-                else -> JScrollPane(JLabel(path.toString()))
+                else -> JLabel(defaultText)
             }
         } catch (e: Exception) {
-            JScrollPane(JLabel(path.toString()))
+            JLabel(defaultText)
         }
     }
 

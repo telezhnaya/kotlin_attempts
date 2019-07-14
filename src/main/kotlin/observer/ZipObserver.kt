@@ -25,7 +25,7 @@ class ZipFileList(zipPath: Path, private val parent: IFileList) : IFileList {
     override fun goForward(file: String): IFileList {
         if (file == "..") return goBack()
         val newPath = File(currentPath).resolve(file).toString()
-        if (zipFile.getEntry(newPath) != null)
+        if (zipFile.getEntry(newPath)?.isDirectory == true) // is it really kotlin way to do this?
             currentPath = newPath
         return this
     }
@@ -58,18 +58,19 @@ class ZipPreviewer : IPreview {
         path = addPath
     }
 
-    override fun getDrawable(dimension: Dimension): Component {
+    override fun getDrawable(dimension: Dimension, defaultText: String): Component {
         if (isDirectory())
             return JScrollPane(JList(getFileList().toTypedArray()))
         if (path.endsWith(".zip")) // do not support zip into zip, many side effects
-            return JLabel(path)
+            return JLabel(defaultText)
         return try {
             val entry = zipFile.getEntry(path)
-            val f = File.createTempFile("morethanthree", File(entry.name).name)
+            // name of the file should be at least 3 characters length
+            val f = File.createTempFile("1234", File(entry.name).name)
             zipFile.getInputStream(entry).copyTo(f.outputStream())
-            LocalPreviewer(f.toPath()).getDrawable(dimension)
+            LocalPreviewer(f.toPath()).getDrawable(dimension, defaultText)
         } catch (e: Exception) {
-            JLabel(path)
+            JLabel(defaultText)
         }
     }
 

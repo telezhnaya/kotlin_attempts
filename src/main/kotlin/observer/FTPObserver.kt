@@ -36,20 +36,21 @@ class FTPFileList(private val client: FTPClient) : IFileList {
 
 
 class FTPPreviewer(private val client: FTPClient, private val localPath: String) : IPreview {
-    override fun getDrawable(dimension: Dimension): Component {
+    override fun getDrawable(dimension: Dimension, defaultText: String): Component {
         if (isDirectory())
             return JScrollPane(JList(getFileList().toTypedArray()))
 
         if (localPath.endsWith(".zip"))
-            return JLabel(localPath)
+            return JLabel(defaultText)
 
         return try {
-            val file = File.createTempFile("morethanthree", localPath)
+            // name of the file should be at least 3 characters length
+            val file = File.createTempFile("1234", localPath)
             client.retrieveFileStream(localPath).copyTo(file.outputStream())
             client.completePendingCommand()
-            LocalPreviewer(file.toPath()).getDrawable(dimension)
+            LocalPreviewer(file.toPath()).getDrawable(dimension, defaultText)
         } catch (e: Exception) {
-            JScrollPane(JLabel(localPath))
+            JLabel(defaultText)
         }
     }
 
