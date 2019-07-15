@@ -4,6 +4,8 @@ import observer.Preview
 import java.awt.Component
 import java.awt.Dimension
 import java.io.File
+import java.io.FileNotFoundException
+import java.nio.file.Path
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 import javax.swing.JLabel
@@ -28,8 +30,10 @@ class ZipPreview : Preview {
     override fun getDrawable(dimension: Dimension, defaultText: String): Component {
         if (isDirectory())
             return JScrollPane(JList(getFileList().toTypedArray()))
+
         if (path.endsWith(".zip"))
             return JLabel(defaultText)
+
         return try {
             val entry = zipFile.getEntry(path)
             // name of the file should be at least 3 characters length
@@ -51,6 +55,21 @@ class ZipPreview : Preview {
         return zipFile.entries().toList()
             .filter { isFileEntryInPath(it) }
             .map { File(it.name).name }
+    }
+
+    override fun willDownloadHelp(): Boolean {
+        return zipFile.getEntry(path) != null && path.endsWith(".zip")
+    }
+
+    override fun downloadFile(destination: Path) {
+        val destinationFile = destination.toFile()
+        if (!destinationFile.exists()) throw FileNotFoundException(destination.toString())
+
+        val fileToCreate = destinationFile.resolve(File(path).name)
+        if (fileToCreate.exists()) throw FileAlreadyExistsException(fileToCreate)
+
+        val entry = zipFile.getEntry(path)
+        zipFile.getInputStream(entry).copyTo(fileToCreate.outputStream())
     }
 
     private fun isDirectory(): Boolean {

@@ -5,7 +5,6 @@ import observer.Preview
 import observer.preview.FTPPreview
 import org.apache.commons.net.ftp.FTPClient
 import java.io.File
-import java.io.FileNotFoundException
 
 
 class FTPFileSystem(private val client: FTPClient) : FileSystem {
@@ -28,19 +27,5 @@ class FTPFileSystem(private val client: FTPClient) : FileSystem {
 
     override fun getCurrentFileName(): String {
         return File(client.printWorkingDirectory()).name
-    }
-
-    override fun willDownloadHelp(file: String): Boolean {
-        return client.listFiles(file).size == 1 && file.endsWith(".zip")
-    }
-
-    override fun downloadFile(file: String, destination: String) {
-        if (!File(destination).exists()) throw FileNotFoundException(destination)
-
-        val fileToCreate = File(destination).resolve(file)
-        if (fileToCreate.exists()) throw FileAlreadyExistsException(fileToCreate)
-
-        client.retrieveFileStream(file).copyTo(fileToCreate.outputStream())
-        client.completePendingCommand()
     }
 }

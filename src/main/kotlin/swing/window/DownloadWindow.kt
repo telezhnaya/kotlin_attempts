@@ -1,7 +1,9 @@
-package swing
+package swing.window
 
 import observer.FileSystem
 import observer.filesystem.LocalFileSystem
+import swing.createGridBagConstraints
+import swing.reloadText
 import java.awt.*
 import java.io.File
 import java.io.FileNotFoundException
@@ -46,7 +48,7 @@ class DownloadWindow(parent: JFrame, fileSystem: FileSystem, path: String) : JFr
             }
 
             try {
-                fileSystem.downloadFile(path, destination.text)
+                fileSystem.getPreview(path).downloadFile(Paths.get(destination.text))
                 val app = MainWindow(LocalFileSystem(Paths.get(destination.text)))
                 val prevLocation = parent.location
                 app.location = Point(prevLocation.x + 50, prevLocation.y + 50)

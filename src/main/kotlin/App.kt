@@ -1,5 +1,5 @@
 import observer.filesystem.LocalFileSystem
-import swing.MainWindow
+import swing.window.MainWindow
 import java.nio.file.Paths
 
 

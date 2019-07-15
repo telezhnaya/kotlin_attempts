@@ -4,7 +4,6 @@ import observer.FileSystem
 import observer.Preview
 import observer.preview.ZipPreview
 import java.io.File
-import java.io.FileNotFoundException
 import java.nio.file.Path
 import java.util.zip.ZipFile
 
@@ -39,20 +38,6 @@ class ZipFileSystem(zipPath: Path, private val parent: FileSystem) : FileSystem 
 
     override fun getCurrentFileName(): String {
         return if (currentPath.isEmpty()) zipName else File(currentPath).name
-    }
-
-    override fun willDownloadHelp(file: String): Boolean {
-        return zipFile.getEntry(getPath(file)) != null && file.endsWith(".zip")
-    }
-
-    override fun downloadFile(file: String, destination: String) {
-        if (!File(destination).exists()) throw FileNotFoundException(destination)
-
-        val fileToCreate = File(destination).resolve(file)
-        if (fileToCreate.exists()) throw FileAlreadyExistsException(fileToCreate)
-
-        val entry = zipFile.getEntry(getPath(file))
-        zipFile.getInputStream(entry).copyTo(fileToCreate.outputStream())
     }
 
     private fun getPath(file: String): String {

@@ -5,6 +5,8 @@ import org.apache.commons.net.ftp.FTPClient
 import java.awt.Component
 import java.awt.Dimension
 import java.io.File
+import java.io.FileNotFoundException
+import java.nio.file.Path
 import javax.swing.JLabel
 import javax.swing.JList
 import javax.swing.JScrollPane
@@ -31,6 +33,21 @@ class FTPPreview(private val client: FTPClient, private val localPath: String) :
 
     override fun getFileList(): List<String> {
         return client.listFiles(localPath).map { file -> file.name }
+    }
+
+    override fun willDownloadHelp(): Boolean {
+        return client.listFiles(localPath).size == 1 && localPath.endsWith(".zip")
+    }
+
+    override fun downloadFile(destination: Path) {
+        val destinationFile = destination.toFile()
+        if (!destinationFile.exists()) throw FileNotFoundException(destination.toString())
+
+        val fileToCreate = destinationFile.resolve(localPath)
+        if (fileToCreate.exists()) throw FileAlreadyExistsException(fileToCreate)
+
+        client.retrieveFileStream(localPath).copyTo(fileToCreate.outputStream())
+        client.completePendingCommand()
     }
 
     private fun isDirectory(): Boolean {

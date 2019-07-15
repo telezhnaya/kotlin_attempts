@@ -1,8 +1,10 @@
-package swing
+package swing.window
 
 import observer.filesystem.FTPFileSystem
 import org.apache.commons.net.ftp.FTP
 import org.apache.commons.net.ftp.FTPClient
+import swing.createGridBagConstraints
+import swing.reloadText
 import java.awt.Color
 import java.awt.Dimension
 import java.awt.GridBagLayout

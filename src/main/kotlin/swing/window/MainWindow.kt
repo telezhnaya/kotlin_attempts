@@ -1,7 +1,11 @@
-package swing
+package swing.window
 
 import observer.FileSystem
 import observer.filesystem.LocalFileSystem
+import swing.createGridBagConstraints
+import swing.refill
+import swing.reloadElement
+import swing.reloadText
 import java.awt.*
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
@@ -85,7 +89,7 @@ class MainWindow(private var fileSystem: FileSystem) : JFrame("Best file manager
         val child = fileSystem.goForward(fileList.selectedValue)
 
         if (child == null) {
-            if (fileSystem.willDownloadHelp(fileList.selectedValue)) {
+            if (fileSystem.getPreview(fileList.selectedValue).willDownloadHelp()) {
                 val downloadWindow = DownloadWindow(this, fileSystem, fileList.selectedValue)
                 downloadWindow.isVisible = true
             }
@@ -112,7 +116,7 @@ class MainWindow(private var fileSystem: FileSystem) : JFrame("Best file manager
     }
 
     private fun showPreview() {
-        preview = if (fileSystem.willDownloadHelp(fileList.selectedValue))
+        preview = if (fileSystem.getPreview(fileList.selectedValue).willDownloadHelp())
             fileSystem.getPreview(fileList.selectedValue).getDrawable(
                 preview.size,
                 "Click Enter to extract this file"

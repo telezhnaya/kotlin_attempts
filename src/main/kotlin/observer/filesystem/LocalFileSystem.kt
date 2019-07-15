@@ -3,8 +3,6 @@ package observer.filesystem
 import observer.FileSystem
 import observer.Preview
 import observer.preview.LocalPreview
-import java.io.File
-import java.io.FileNotFoundException
 import java.nio.file.Path
 
 class LocalFileSystem(path: Path) : FileSystem {
@@ -39,17 +37,5 @@ class LocalFileSystem(path: Path) : FileSystem {
 
     override fun getCurrentFileName(): String {
         return fullPath.toFile().name
-    }
-
-    override fun willDownloadHelp(file: String): Boolean {
-        return false
-    }
-
-    override fun downloadFile(file: String, destination: String) {
-        if (!File(destination).exists()) throw FileNotFoundException(destination)
-
-        val fileToCreate = fullPath.resolve(file).toFile()
-        if (fileToCreate.exists()) throw FileAlreadyExistsException(fileToCreate)
-        fileToCreate.inputStream().copyTo(File(destination).outputStream())
     }
 }
