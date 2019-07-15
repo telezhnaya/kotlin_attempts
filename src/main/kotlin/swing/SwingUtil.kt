@@ -1,17 +1,39 @@
 package swing
 
-import java.awt.Color
+import java.awt.Component
 import java.awt.Dimension
 import java.awt.GridBagConstraints
 import java.awt.Insets
+import javax.swing.DefaultListModel
 import javax.swing.JLabel
+import javax.swing.JPanel
+import kotlin.math.min
 
-fun getScaledDimension(inner: Dimension, boundary: Dimension): Dimension {
-    val widthRatio = boundary.getWidth() / inner.getWidth()
-    val heightRatio = boundary.getHeight() / inner.getHeight()
-    val ratio = Math.min(widthRatio, heightRatio)
 
-    return Dimension((inner.width * ratio).toInt(), (inner.height * ratio).toInt())
+fun Dimension.scale(boundary: Dimension): Dimension {
+    val widthRatio = boundary.getWidth() / this.width
+    val heightRatio = boundary.getHeight() / this.height
+    val ratio = min(widthRatio, heightRatio)
+    return Dimension((this.width * ratio).toInt(), (this.height * ratio).toInt())
+}
+
+fun JLabel.reloadText(text: String) {
+    this.text = text
+    this.revalidate()
+    this.repaint()
+}
+
+fun DefaultListModel<String>.refill(files: List<String>) {
+    this.removeAllElements()
+    this.add(0, "..")
+    this.addAll(files)
+}
+
+fun JPanel.reloadElement(element: Component, position: Int) {
+    this.remove(position)
+    this.add(element, position)
+    this.revalidate()
+    this.repaint()
 }
 
 fun createGridBagConstraints(
@@ -34,10 +56,4 @@ fun createGridBagConstraints(
         0,
         0
     )
-}
-
-fun showError(error: JLabel, text: String) {
-    error.text = text
-    error.foreground = Color.RED
-    error.revalidate()
 }

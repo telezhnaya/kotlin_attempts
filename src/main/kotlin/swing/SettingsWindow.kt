@@ -1,8 +1,9 @@
 package swing
 
-import observer.FTPFileList
+import observer.filesystem.FTPFileSystem
 import org.apache.commons.net.ftp.FTP
 import org.apache.commons.net.ftp.FTPClient
+import java.awt.Color
 import java.awt.Dimension
 import java.awt.GridBagLayout
 import java.awt.GridLayout
@@ -36,6 +37,7 @@ class SettingsWindow(header: String, parent: JFrame) : JFrame(header) {
         settings.add(password, createGridBagConstraints(1, 2, 1.0, 0.0))
 
         mainContainer.add(settings, createGridBagConstraints(0, 0, 1.0, 1.0))
+        error.foreground = Color.RED
         mainContainer.add(error, createGridBagConstraints(0, 1, 1.0, 0.0, 2))
 
         val buttons = JPanel()
@@ -54,21 +56,23 @@ class SettingsWindow(header: String, parent: JFrame) : JFrame(header) {
             try {
                 client.connect(address.text)
             } catch (e: ConnectException) {
-                showError(error, "Impossible to connect to the server")
+                error.reloadText("Impossible to connect to the server")
                 return@addActionListener
             }
+
             // https://stackoverflow.com/questions/10443308/why-gettext-in-jpasswordfield-was-deprecated
             // Using this library, can't get rid of this insecure line, sorry
-            if (client.login(user.text, password.text)) {
-                client.setFileType(FTP.BINARY_FILE_TYPE)
-                val fileList = FTPFileList(client)
-                val app = MainWindow(fileList)
-                app.isVisible = true
-                parent.dispose()
-                this.dispose()
-            } else {
-                showError(error, "Invalid credentials. Please try again")
+            if (!client.login(user.text, password.text)) {
+                error.reloadText("Invalid credentials. Please try again")
+                return@addActionListener
             }
+
+            client.setFileType(FTP.BINARY_FILE_TYPE)
+            val fileList = FTPFileSystem(client)
+            val app = MainWindow(fileList)
+            app.isVisible = true
+            parent.dispose()
+            this.dispose()
         }
         buttons.add(submit)
 

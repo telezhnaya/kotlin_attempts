@@ -1,18 +1,15 @@
 package swing
 
-import observer.IFileList
-import observer.LocalFileList
-import java.awt.Dimension
-import java.awt.GridBagLayout
-import java.awt.GridLayout
-import java.awt.Point
+import observer.FileSystem
+import observer.filesystem.LocalFileSystem
+import java.awt.*
 import java.io.File
 import java.io.FileNotFoundException
 import java.nio.file.Paths
 import javax.swing.*
 
 
-class DownloadWindow(parent: JFrame, fileList: IFileList, path: String) : JFrame("Download the file") {
+class DownloadWindow(parent: JFrame, fileSystem: FileSystem, path: String) : JFrame("Download the file") {
     private val error = JLabel(" ")
 
     init {
@@ -29,6 +26,7 @@ class DownloadWindow(parent: JFrame, fileList: IFileList, path: String) : JFrame
 
         val destination = JTextField()
         mainContainer.add(destination, createGridBagConstraints(0, 1, 1.0, 0.0, 2))
+        error.foreground = Color.RED
         mainContainer.add(error, createGridBagConstraints(0, 2, 1.0, 0.0, 2))
 
         val buttons = JPanel()
@@ -39,25 +37,27 @@ class DownloadWindow(parent: JFrame, fileList: IFileList, path: String) : JFrame
             this.dispose()
         }
         buttons.add(cancel)
+
         val submit = JButton("Submit")
         submit.addActionListener {
             if (!File(destination.text).isAbsolute) {
-                showError(error, "Please enter absolute path")
+                error.reloadText("Please enter absolute path")
                 return@addActionListener
             }
+
             try {
-                fileList.downloadFile(path, destination.text)
-                val app = MainWindow(LocalFileList(Paths.get(destination.text)))
+                fileSystem.downloadFile(path, destination.text)
+                val app = MainWindow(LocalFileSystem(Paths.get(destination.text)))
                 val prevLocation = parent.location
                 app.location = Point(prevLocation.x + 50, prevLocation.y + 50)
                 this.dispose()
                 app.isVisible = true
             } catch (e: FileAlreadyExistsException) {
-                showError(error, "The file already exists, please delete it at first")
+                error.reloadText("The file already exists, please delete it at first")
             } catch (e: FileNotFoundException) {
-                showError(error, "The path does not exist, please try again")
+                error.reloadText("The path does not exist, please try again")
             } catch (e: Exception) {
-                showError(error, "Sorry, something goes wrong")
+                error.reloadText("Sorry, something goes wrong")
             }
         }
         buttons.add(submit)
