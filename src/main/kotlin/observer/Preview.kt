@@ -1,13 +1,11 @@
 package observer
 
-import java.awt.Component
-import java.awt.Dimension
-import java.nio.file.Path
+import java.io.InputStream
 
-interface Preview {
-    fun willDownloadHelp(): Boolean
-    fun downloadFile(destination: Path) // Task
-
-    fun getFileList(): List<String>
-    fun getDrawable(dimension: Dimension, defaultText: String = "Unable to download the preview"): Component // Task
+sealed class Preview {
+    data class Directory(val paths: List<String>) : Preview()
+    data class Image(val inputStream: InputStream) : Preview()
+    data class Text(val inputStream: InputStream) : Preview()
+    data class Remote(val inputStream: InputStream) : Preview()
+    object Unhandled : Preview()
 }

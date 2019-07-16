@@ -1,14 +1,27 @@
 package swing
 
-import java.awt.Component
-import java.awt.Dimension
-import java.awt.GridBagConstraints
-import java.awt.Insets
-import javax.swing.DefaultListModel
-import javax.swing.JLabel
-import javax.swing.JPanel
+import observer.Preview
+import java.awt.*
+import java.io.BufferedReader
+import javax.imageio.ImageIO
+import javax.swing.*
 import kotlin.math.min
 
+
+fun getComponent(preview: Preview, dimension: Dimension): Component {
+    return when (preview) {
+        is Preview.Directory -> JScrollPane(JList(preview.paths.toTypedArray()))
+        is Preview.Image -> {
+            val img = ImageIO.read(preview.inputStream)
+            val imgDimension = Dimension(img.width, img.height).scale(dimension)
+            JLabel(ImageIcon(img.getScaledInstance(imgDimension.width, imgDimension.height, Image.SCALE_SMOOTH)))
+        }
+        is Preview.Text ->
+            JScrollPane(JTextArea(preview.inputStream.bufferedReader().use(BufferedReader::readText)))
+        is Preview.Remote -> JLabel("Click Enter to extract this file")
+        is Preview.Unhandled -> JLabel("Preview is not supported yet")
+    }
+}
 
 fun Dimension.scale(boundary: Dimension): Dimension {
     val widthRatio = boundary.getWidth() / this.width

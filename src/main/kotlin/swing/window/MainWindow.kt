@@ -1,11 +1,9 @@
 package swing.window
 
 import observer.FileSystem
+import observer.Preview
 import observer.filesystem.LocalFileSystem
-import swing.createGridBagConstraints
-import swing.refill
-import swing.reloadElement
-import swing.reloadText
+import swing.*
 import java.awt.*
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
@@ -50,11 +48,11 @@ class MainWindow(private var fileSystem: FileSystem) : JFrame("Best file manager
         mainLayout.add(pathAndSettingsLayout, createGridBagConstraints(0, 0, 1.0, 0.0))
 
 
-        fileListModel.refill(fileSystem.getPreview().getFileList())
+        fileListModel.refill(fileSystem.getFileList())
         fileList.init()
         fileListAndPreviewLayout.add(JScrollPane(fileList))
 
-        preview = fileSystem.getPreview(fileListModel[0]).getDrawable(fileList.size)
+        preview = getComponent(fileSystem.getPreview(fileListModel[0]), fileList.size)
         fileListAndPreviewLayout.add(preview)
         mainLayout.add(fileListAndPreviewLayout, createGridBagConstraints(0, 1, 1.0, 1.0))
     }
@@ -85,21 +83,21 @@ class MainWindow(private var fileSystem: FileSystem) : JFrame("Best file manager
 
     private fun goForward() {
         if (fileList.selectedValue == null) return
-
         val child = fileSystem.goForward(fileList.selectedValue)
 
         if (child == null) {
-            if (fileSystem.getPreview(fileList.selectedValue).willDownloadHelp()) {
-                val downloadWindow = DownloadWindow(this, fileSystem, fileList.selectedValue)
+            val curPreview = fileSystem.getPreview(fileList.selectedValue)
+            if (curPreview is Preview.Remote) {
+                val downloadWindow = DownloadWindow(this, curPreview.inputStream, fileList.selectedValue)
                 downloadWindow.isVisible = true
             }
             return
         }
 
         fileSystem = child
-        fileListModel.refill(fileSystem.getPreview().getFileList())
+        fileListModel.refill(fileSystem.getFileList())
         fileList.selectedIndex = 0
-        preview = fileSystem.getPreview(fileListModel[0]).getDrawable(fileList.size)
+        preview = getComponent(fileSystem.getPreview(fileListModel[0]), fileList.size)
         fileListAndPreviewLayout.reloadElement(preview, 1)
         path.reloadText(fileSystem.getFullPath())
     }
@@ -109,21 +107,14 @@ class MainWindow(private var fileSystem: FileSystem) : JFrame("Best file manager
         val parent = fileSystem.goBack() ?: return
 
         fileSystem = parent
-        fileListModel.refill(fileSystem.getPreview().getFileList())
-        preview = fileSystem.getPreview(fileName).getDrawable(fileList.size)
+        fileListModel.refill(fileSystem.getFileList())
+        preview = getComponent(fileSystem.getPreview(fileName), fileList.size)
         fileListAndPreviewLayout.reloadElement(preview, 1)
         path.reloadText(fileSystem.getFullPath())
     }
 
     private fun showPreview() {
-        preview = if (fileSystem.getPreview(fileList.selectedValue).willDownloadHelp())
-            fileSystem.getPreview(fileList.selectedValue).getDrawable(
-                preview.size,
-                "Click Enter to extract this file"
-            )
-        else
-            fileSystem.getPreview(fileList.selectedValue).getDrawable(fileList.size)
-
+        preview = getComponent(fileSystem.getPreview(fileList.selectedValue), fileList.size)
         fileListAndPreviewLayout.reloadElement(preview, 1)
     }
 
@@ -156,10 +147,12 @@ class MainWindow(private var fileSystem: FileSystem) : JFrame("Best file manager
                             parent.pathAndSettingsLayout.reloadPath(editablePath, parent.path, parent.pathConstraints)
 
                             parent.fileSystem = LocalFileSystem(Paths.get(parent.path.text))
-                            parent.fileListModel.refill(parent.fileSystem.getPreview().getFileList())
+                            parent.fileListModel.refill(parent.fileSystem.getFileList())
                             parent.fileList.selectedIndex = 0
-                            parent.preview =
-                                parent.fileSystem.getPreview(parent.fileListModel[0]).getDrawable(parent.fileList.size)
+                            parent.preview = getComponent(
+                                parent.fileSystem.getPreview(parent.fileListModel[0]),
+                                parent.fileList.size
+                            )
                             parent.fileListAndPreviewLayout.reloadElement(parent.preview, 1)
                         }
                     }

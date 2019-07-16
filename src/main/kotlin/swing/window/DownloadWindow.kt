@@ -1,17 +1,17 @@
 package swing.window
 
-import observer.FileSystem
 import observer.filesystem.LocalFileSystem
 import swing.createGridBagConstraints
 import swing.reloadText
 import java.awt.*
 import java.io.File
 import java.io.FileNotFoundException
+import java.io.InputStream
 import java.nio.file.Paths
 import javax.swing.*
 
 
-class DownloadWindow(parent: JFrame, fileSystem: FileSystem, path: String) : JFrame("Download the file") {
+class DownloadWindow(parent: JFrame, inputStream: InputStream, fileName: String) : JFrame("Download the file") {
     private val error = JLabel(" ")
 
     init {
@@ -48,7 +48,7 @@ class DownloadWindow(parent: JFrame, fileSystem: FileSystem, path: String) : JFr
             }
 
             try {
-                fileSystem.getPreview(path).downloadFile(Paths.get(destination.text))
+                inputStream.saveTo(File(destination.text), fileName)
                 val app = MainWindow(LocalFileSystem(Paths.get(destination.text)))
                 val prevLocation = parent.location
                 app.location = Point(prevLocation.x + 50, prevLocation.y + 50)
@@ -65,5 +65,15 @@ class DownloadWindow(parent: JFrame, fileSystem: FileSystem, path: String) : JFr
         buttons.add(submit)
 
         mainContainer.add(buttons, createGridBagConstraints(0, 3, 1.0, 0.0, 2))
+    }
+
+    private fun InputStream.saveTo(destination: File, fileName: String) {
+        if (!destination.exists()) throw FileNotFoundException(destination.path)
+
+        val fileToCreate = destination.resolve(fileName)
+        if (fileToCreate.exists()) throw FileAlreadyExistsException(fileToCreate)
+
+        this.copyTo(fileToCreate.outputStream())
+        // client.completePendingCommand() ?
     }
 }

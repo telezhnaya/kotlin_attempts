@@ -70,11 +70,10 @@ class SettingsWindow(header: String, parent: JFrame) : JFrame(header) {
             }
 
             client.setFileType(FTP.BINARY_FILE_TYPE)
-            val fileList = FTPFileSystem(client)
-            val app = MainWindow(fileList)
-            app.isVisible = true
-            parent.dispose()
+            val app = MainWindow(FTPFileSystem(client))
             this.dispose()
+            parent.dispose()
+            app.isVisible = true
         }
         buttons.add(submit)
 
