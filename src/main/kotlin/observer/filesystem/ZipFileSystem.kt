@@ -30,11 +30,11 @@ class ZipFileSystem(zip: File, private val parent: FileSystem) : FileSystem {
         val preview = File(currentPath).resolve(file).normalize()
         if (preview.name == "..") return parent.getPreview("")
 
-        val entry = zipFile.getEntry(preview.path)
+        val entry = zipFile.getEntry(preview.path) ?: return Preview.Unhandled
         if (preview.name.isEmpty() || entry.isDirectory)
             return Preview.Directory(getFileList(preview.path))
 
-        val inputStream = zipFile.getInputStream(entry)
+        val inputStream = zipFile.getInputStream(entry) ?: return Preview.Unhandled
         if (preview.name.endsWith(".zip"))
             return Preview.Remote(inputStream)
 

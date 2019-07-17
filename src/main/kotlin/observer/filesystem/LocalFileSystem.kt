@@ -5,21 +5,21 @@ import observer.Preview
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.Paths
 
 class LocalFileSystem(path: Path) : FileSystem {
     private var fullPath = path.toAbsolutePath()
 
     override fun goBack(): FileSystem? {
-        // File.listRoots()
-        val isNewPath = fullPath != fullPath.parent
-        fullPath = fullPath.parent ?: fullPath
+        val isNewPath = fullPath != null && fullPath != fullPath.parent
+        fullPath = fullPath?.parent
         return if (isNewPath) this else null
     }
 
     override fun goForward(file: String): FileSystem? {
         if (file == "..") return goBack()
 
-        val newPath = fullPath.resolve(file)
+        val newPath = fullPath?.resolve(file) ?: Paths.get(file)
         if (file.endsWith(".zip"))
             return ZipFileSystem(newPath.toFile(), this)
 
@@ -29,6 +29,7 @@ class LocalFileSystem(path: Path) : FileSystem {
     }
 
     override fun getPreview(file: String): Preview {
+        if (fullPath == null) return Preview.Directory(getFileList())
         val preview = fullPath.resolve(file).toFile() ?: return Preview.Unhandled
 
         return when (getContentType(preview)) {
@@ -45,14 +46,16 @@ class LocalFileSystem(path: Path) : FileSystem {
     }
 
     override fun getFullPath(): String {
-        return fullPath.toString()
+        return fullPath?.toString() ?: ""
     }
 
     override fun getCurrentFileName(): String {
-        return fullPath.toFile().name
+        return fullPath?.toFile()?.name ?: ""
     }
 
-    private fun getFileList(path: Path): List<String> {
+    private fun getFileList(path: Path?): List<String> {
+        if (path == null) return File.listRoots().map { file -> file.path }
+
         val files = path.toFile().listFiles() ?: listOf<File>().toTypedArray()
         return files.map { file -> file.name }
     }
