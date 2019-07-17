@@ -10,13 +10,13 @@ import java.nio.file.Paths
 class LocalFileSystem(path: Path) : FileSystem {
     private var fullPath = path.toAbsolutePath()
 
-    override fun goBack(): FileSystem? {
+    override suspend fun goBack(): FileSystem? {
         val isNewPath = fullPath != null && fullPath != fullPath.parent
         fullPath = fullPath?.parent
         return if (isNewPath) this else null
     }
 
-    override fun goForward(file: String): FileSystem? {
+    override suspend fun goForward(file: String): FileSystem? {
         if (file == "..") return goBack()
 
         val newPath = fullPath?.resolve(file) ?: Paths.get(file)
@@ -28,7 +28,7 @@ class LocalFileSystem(path: Path) : FileSystem {
         return if (isNewPath) this else null
     }
 
-    override fun getPreview(file: String): Preview {
+    override suspend fun getPreview(file: String): Preview {
         if (fullPath == null) return Preview.Directory(getFileList())
         val preview = fullPath.resolve(file).toFile() ?: return Preview.Unhandled
 
@@ -41,7 +41,7 @@ class LocalFileSystem(path: Path) : FileSystem {
         }
     }
 
-    override fun getFileList(): List<String> {
+    override suspend fun getFileList(): List<String> {
         return getFileList(fullPath)
     }
 

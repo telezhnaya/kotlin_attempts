@@ -1,5 +1,7 @@
 package observer.filesystem
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import observer.FileSystem
 import observer.Preview
 import java.io.File
@@ -11,13 +13,13 @@ class ZipFileSystem(zip: File, private val parent: FileSystem) : FileSystem {
     private val zipName = zip.name
     private var currentPath = ""
 
-    override fun goBack(): FileSystem? {
+    override suspend fun goBack(): FileSystem? {
         if (currentPath.isEmpty()) return parent
         currentPath = File(currentPath).parent ?: ""
         return this
     }
 
-    override fun goForward(file: String): FileSystem? {
+    override suspend fun goForward(file: String): FileSystem? {
         if (file == "..") return goBack()
         val newFile = File(currentPath).resolve(file).normalize()
 
@@ -26,7 +28,7 @@ class ZipFileSystem(zip: File, private val parent: FileSystem) : FileSystem {
         return if (isDirectory) this else null
     }
 
-    override fun getPreview(file: String): Preview {
+    override suspend fun getPreview(file: String): Preview {
         val preview = File(currentPath).resolve(file).normalize()
         if (preview.name == "..") return parent.getPreview("")
 
@@ -34,17 +36,17 @@ class ZipFileSystem(zip: File, private val parent: FileSystem) : FileSystem {
         if (preview.name.isEmpty() || entry.isDirectory)
             return Preview.Directory(getFileList(preview.path))
 
-        val inputStream = zipFile.getInputStream(entry) ?: return Preview.Unhandled
+        val inputStream = withContext(Dispatchers.IO) { zipFile.getInputStream(entry) } ?: return Preview.Unhandled
         if (preview.name.endsWith(".zip"))
             return Preview.Remote(inputStream)
 
         // name of the file should be at least 3 characters length
-        val tempFile = File.createTempFile("123", preview.name)
+        val tempFile = withContext(Dispatchers.IO) { File.createTempFile("123", preview.name) }
         inputStream.use { it.copyTo(tempFile.outputStream()) }
         return LocalFileSystem(tempFile.toPath()).getPreview("")
     }
 
-    override fun getFileList(): List<String> {
+    override suspend fun getFileList(): List<String> {
         return getFileList(currentPath)
     }
 

@@ -1,5 +1,8 @@
 package swing.window
 
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import observer.FileSystem
 import observer.Preview
 import observer.filesystem.LocalFileSystem
@@ -50,11 +53,11 @@ class MainWindow(private var fileSystem: FileSystem) : JFrame("Best file manager
         mainLayout.add(pathAndSettingsLayout, createGridBagConstraints(0, 0, 1.0, 0.0))
 
 
-        fileListModel.refill(fileSystem.getFileList())
+        fileListModel.refill(runBlocking { fileSystem.getFileList() })
         fileList.init()
         fileListAndPreviewLayout.add(JScrollPane(fileList))
 
-        preview = getComponent(fileSystem.getPreview(fileListModel[0]), fileList.size)
+        preview = getComponent(runBlocking { fileSystem.getPreview(fileListModel[0]) }, fileList.size)
         fileListAndPreviewLayout.add(preview)
         mainLayout.add(fileListAndPreviewLayout, createGridBagConstraints(0, 1, 1.0, 1.0))
     }
@@ -63,27 +66,29 @@ class MainWindow(private var fileSystem: FileSystem) : JFrame("Best file manager
         this.selectionMode = ListSelectionModel.SINGLE_SELECTION
 
         this.addListSelectionListener {
-            if (this.selectedIndex != -1) showPreview()
+            if (this.selectedIndex != -1) GlobalScope.launch { showPreview() }
         }
 
         this.addMouseListener(object : MouseAdapter() {
             override fun mouseClicked(evt: MouseEvent) {
-                if (evt.clickCount == 2) goForward()
+                if (evt.clickCount == 2) GlobalScope.launch { goForward() }
             }
         })
 
         this.addKeyListener(object : KeyAdapter() {
             override fun keyReleased(ke: KeyEvent) {
-                when (ke.keyCode) {
-                    KeyEvent.VK_RIGHT -> goForward()
-                    KeyEvent.VK_ENTER -> goForward()
-                    KeyEvent.VK_LEFT -> goBack()
+                GlobalScope.launch {
+                    when (ke.keyCode) {
+                        KeyEvent.VK_RIGHT -> goForward()
+                        KeyEvent.VK_ENTER -> goForward()
+                        KeyEvent.VK_LEFT -> goBack()
+                    }
                 }
             }
         })
     }
 
-    private fun goForward() {
+    private suspend fun goForward() {
         if (fileList.selectedValue == null) return
         val child = fileSystem.goForward(fileList.selectedValue)
 
@@ -104,7 +109,7 @@ class MainWindow(private var fileSystem: FileSystem) : JFrame("Best file manager
         path.reloadText(fileSystem.getFullPath())
     }
 
-    private fun goBack() {
+    private suspend fun goBack() {
         val fileName = fileSystem.getCurrentFileName()
         val parent = fileSystem.goBack() ?: return
 
@@ -115,7 +120,7 @@ class MainWindow(private var fileSystem: FileSystem) : JFrame("Best file manager
         path.reloadText(fileSystem.getFullPath())
     }
 
-    private fun showPreview() {
+    private suspend fun showPreview() {
         preview = getComponent(fileSystem.getPreview(fileList.selectedValue), fileList.size)
         fileListAndPreviewLayout.reloadElement(preview, 1)
     }
@@ -127,35 +132,41 @@ class MainWindow(private var fileSystem: FileSystem) : JFrame("Best file manager
 
                 editablePath.addKeyListener(object : KeyAdapter() {
                     override fun keyReleased(ke: KeyEvent) {
-                        if (ke.keyCode == KeyEvent.VK_ENTER) {
-                            val path = File(editablePath.text)
+                        GlobalScope.launch {
+                            if (ke.keyCode == KeyEvent.VK_ENTER) {
+                                val path = File(editablePath.text)
 
-                            if (!path.isAbsolute || !path.exists()) {
-                                JOptionPane.showMessageDialog(
-                                    null,
-                                    "Invalid path, try again",
-                                    "Error",
-                                    JOptionPane.PLAIN_MESSAGE
-                                )
+                                if (!path.isAbsolute || !path.exists()) {
+                                    JOptionPane.showMessageDialog(
+                                        null,
+                                        "Invalid path, try again",
+                                        "Error",
+                                        JOptionPane.PLAIN_MESSAGE
+                                    )
+                                    parent.pathAndSettingsLayout.reloadPath(
+                                        editablePath,
+                                        parent.path,
+                                        parent.pathConstraints
+                                    )
+                                    return@launch
+                                }
+
+                                parent.path.text = editablePath.text
                                 parent.pathAndSettingsLayout.reloadPath(
                                     editablePath,
                                     parent.path,
                                     parent.pathConstraints
                                 )
-                                return
+
+                                parent.fileSystem = LocalFileSystem(Paths.get(parent.path.text))
+                                parent.fileListModel.refill(parent.fileSystem.getFileList())
+                                parent.fileList.selectedIndex = 0
+                                parent.preview = getComponent(
+                                    parent.fileSystem.getPreview(parent.fileListModel[0]),
+                                    parent.fileList.size
+                                )
+                                parent.fileListAndPreviewLayout.reloadElement(parent.preview, 1)
                             }
-
-                            parent.path.text = editablePath.text
-                            parent.pathAndSettingsLayout.reloadPath(editablePath, parent.path, parent.pathConstraints)
-
-                            parent.fileSystem = LocalFileSystem(Paths.get(parent.path.text))
-                            parent.fileListModel.refill(parent.fileSystem.getFileList())
-                            parent.fileList.selectedIndex = 0
-                            parent.preview = getComponent(
-                                parent.fileSystem.getPreview(parent.fileListModel[0]),
-                                parent.fileList.size
-                            )
-                            parent.fileListAndPreviewLayout.reloadElement(parent.preview, 1)
                         }
                     }
                 })

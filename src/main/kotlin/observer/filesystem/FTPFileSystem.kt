@@ -7,16 +7,16 @@ import java.io.File
 
 
 class FTPFileSystem(private val client: FTPClient) : FileSystem {
-    override fun goBack(): FileSystem? {
+    override suspend fun goBack(): FileSystem? {
         return if (client.changeToParentDirectory()) this else null
     }
 
-    override fun goForward(file: String): FileSystem? {
+    override suspend fun goForward(file: String): FileSystem? {
         if (file == "..") return goBack()
         return if (client.changeWorkingDirectory(file)) this else null
     }
 
-    override fun getPreview(file: String): Preview {
+    override suspend fun getPreview(file: String): Preview {
         if (isDirectory(file)) return Preview.Directory(getFileList(file))
 
         val inputStream = client.retrieveFileStream(file) ?: return Preview.Unhandled
@@ -37,7 +37,7 @@ class FTPFileSystem(private val client: FTPClient) : FileSystem {
         return LocalFileSystem(tempFile.toPath()).getPreview("")
     }
 
-    override fun getFileList(): List<String> {
+    override suspend fun getFileList(): List<String> {
         return getFileList("")
     }
 

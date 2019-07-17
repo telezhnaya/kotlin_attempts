@@ -1,11 +1,11 @@
 package observer
 
 interface FileSystem {
-    fun goBack(): FileSystem?
-    fun goForward(file: String): FileSystem?
+    suspend fun goBack(): FileSystem?
+    suspend fun goForward(file: String): FileSystem?
 
-    fun getPreview(file: String = ""): Preview
-    fun getFileList(): List<String>
+    suspend fun getPreview(file: String = ""): Preview
+    suspend fun getFileList(): List<String>
 
     fun getFullPath(): String
     fun getCurrentFileName(): String
