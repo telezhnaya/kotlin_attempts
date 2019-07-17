@@ -27,6 +27,8 @@ class MainWindow(private var fileSystem: FileSystem) : JFrame("Best file manager
     init {
         val screen = Toolkit.getDefaultToolkit().screenSize
         this.size = Dimension(screen.width / 3 * 2, screen.height / 3 * 2)
+        this.defaultCloseOperation = DISPOSE_ON_CLOSE
+
         this.setLocationRelativeTo(null)
         val mainLayout = this.contentPane
 
