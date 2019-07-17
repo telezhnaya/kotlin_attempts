@@ -9,6 +9,8 @@ import java.awt.Color
 import java.awt.Dimension
 import java.awt.GridBagLayout
 import java.awt.GridLayout
+import java.awt.event.WindowAdapter
+import java.awt.event.WindowEvent
 import java.net.ConnectException
 import javax.swing.*
 
@@ -58,7 +60,7 @@ class SettingsWindow(header: String, parent: JFrame) : JFrame(header) {
             try {
                 client.connect(address.text)
             } catch (e: ConnectException) {
-                error.reloadText("Impossible to connect to the server")
+                error.reloadText("Unable to connect to the server")
                 return@addActionListener
             }
 
@@ -71,6 +73,13 @@ class SettingsWindow(header: String, parent: JFrame) : JFrame(header) {
 
             client.setFileType(FTP.BINARY_FILE_TYPE)
             val app = MainWindow(FTPFileSystem(client))
+
+            app.addWindowListener(object : WindowAdapter() {
+                override fun windowClosing(e: WindowEvent) {
+                    client.disconnect()
+                }
+            })
+
             this.dispose()
             parent.dispose()
             app.isVisible = true

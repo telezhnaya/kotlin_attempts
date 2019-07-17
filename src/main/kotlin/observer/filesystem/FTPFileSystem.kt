@@ -21,13 +21,19 @@ class FTPFileSystem(private val client: FTPClient) : FileSystem {
 
         val inputStream = client.retrieveFileStream(file) ?: return Preview.Unhandled
 
-        if (file.endsWith(".zip"))
-            return Preview.Remote(inputStream)
+        // oh god. We have to download zip to tempFile because we should invoke completePendingCommand
+        // after copying or nothing will work
+//        if (file.endsWith(".zip"))
+//            return Preview.Remote(inputStream)
 
         // name of the file should be at least 3 characters length
         val tempFile = File.createTempFile("123", file)
-        inputStream.copyTo(tempFile.outputStream())
+        inputStream.use { it.copyTo(tempFile.outputStream()) }
         client.completePendingCommand()
+
+        if (file.endsWith(".zip"))
+            return Preview.Remote(tempFile.inputStream())
+
         return LocalFileSystem(tempFile.toPath()).getPreview("")
     }
 
@@ -48,9 +54,6 @@ class FTPFileSystem(private val client: FTPClient) : FileSystem {
     }
 
     private fun getFileList(path: String): List<String> {
-        val aa = client.printWorkingDirectory()
-        val a = client.listFiles()
-        val b = client.listFiles(path)
         return client.listFiles(path).map { file -> file.name }
     }
 

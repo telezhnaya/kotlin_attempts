@@ -9,17 +9,23 @@ import kotlin.math.min
 
 
 fun getComponent(preview: Preview, dimension: Dimension): Component {
-    return when (preview) {
-        is Preview.Directory -> JScrollPane(JList(preview.paths.toTypedArray()))
-        is Preview.Image -> {
-            val img = ImageIO.read(preview.inputStream)
-            val imgDimension = Dimension(img.width, img.height).scale(dimension)
-            JLabel(ImageIcon(img.getScaledInstance(imgDimension.width, imgDimension.height, Image.SCALE_SMOOTH)))
+    return try {
+        when (preview) {
+            is Preview.Directory -> JScrollPane(JList(preview.paths.toTypedArray()))
+            is Preview.Image -> {
+                val img = preview.inputStream.use { ImageIO.read(it) }
+                val imgDimension = Dimension(img.width, img.height).scale(dimension)
+                JLabel(ImageIcon(img.getScaledInstance(imgDimension.width, imgDimension.height, Image.SCALE_SMOOTH)))
+            }
+            is Preview.Text -> {
+                val text = preview.inputStream.bufferedReader().use(BufferedReader::readText)
+                JScrollPane(JTextArea(text))
+            }
+            is Preview.Remote -> JLabel("Click Enter to extract this file")
+            is Preview.Unhandled -> JLabel("Preview is not supported yet")
         }
-        is Preview.Text ->
-            JScrollPane(JTextArea(preview.inputStream.bufferedReader().use(BufferedReader::readText)))
-        is Preview.Remote -> JLabel("Click Enter to extract this file")
-        is Preview.Unhandled -> JLabel("Preview is not supported yet")
+    } catch (e: Exception) {
+        JLabel("Preview is not supported yet")
     }
 }
 

@@ -1,6 +1,7 @@
 package swing.window
 
 import observer.filesystem.LocalFileSystem
+import observer.filesystem.ZipFileSystem
 import swing.createGridBagConstraints
 import swing.reloadText
 import java.awt.*
@@ -49,7 +50,12 @@ class DownloadWindow(parent: JFrame, inputStream: InputStream, fileName: String)
 
             try {
                 inputStream.saveTo(File(destination.text), fileName)
-                val app = MainWindow(LocalFileSystem(Paths.get(destination.text)))
+                val app = MainWindow(
+                    ZipFileSystem(
+                        File(destination.text).resolve(fileName),
+                        LocalFileSystem(Paths.get(destination.text))
+                    )
+                )
                 val prevLocation = parent.location
                 app.location = Point(prevLocation.x + 50, prevLocation.y + 50)
                 this.dispose()
@@ -73,7 +79,6 @@ class DownloadWindow(parent: JFrame, inputStream: InputStream, fileName: String)
         val fileToCreate = destination.resolve(fileName)
         if (fileToCreate.exists()) throw FileAlreadyExistsException(fileToCreate)
 
-        this.copyTo(fileToCreate.outputStream())
-        // client.completePendingCommand() ?
+        this.use { it.copyTo(fileToCreate.outputStream()) }
     }
 }

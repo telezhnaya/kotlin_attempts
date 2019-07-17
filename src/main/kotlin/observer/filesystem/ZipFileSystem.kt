@@ -40,7 +40,7 @@ class ZipFileSystem(zip: File, private val parent: FileSystem) : FileSystem {
 
         // name of the file should be at least 3 characters length
         val tempFile = File.createTempFile("123", preview.name)
-        inputStream.copyTo(tempFile.outputStream())
+        inputStream.use { it.copyTo(tempFile.outputStream()) }
         return LocalFileSystem(tempFile.toPath()).getPreview("")
     }
 
