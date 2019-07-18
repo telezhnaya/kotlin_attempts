@@ -3,6 +3,7 @@ package observer.filesystem
 import observer.FileSystem
 import observer.Preview
 import org.apache.commons.net.ftp.FTPClient
+import org.apache.commons.net.ftp.FTPFile
 import java.io.File
 
 
@@ -54,7 +55,9 @@ class FTPFileSystem(private val client: FTPClient) : FileSystem {
     }
 
     private fun getFileList(path: String): List<String> {
-        return client.listFiles(path).map { file -> file.name }
+        return client.listFiles(path)
+            .sortedWith(compareBy<FTPFile> { !it.isDirectory }.thenBy { it.name } )
+            .map { file -> file.name }
     }
 
 }

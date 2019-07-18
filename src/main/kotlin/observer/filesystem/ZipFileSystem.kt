@@ -65,6 +65,7 @@ class ZipFileSystem(zip: File, private val parent: FileSystem) : FileSystem {
 
         return zipFile.entries().toList()
             .filter { isFileEntryInPath(it) }
+            .sortedWith(compareBy<ZipEntry> { !it.isDirectory }.thenBy { it.name } )
             .map { File(it.name).name }
     }
 }

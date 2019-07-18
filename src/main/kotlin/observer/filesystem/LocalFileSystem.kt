@@ -57,7 +57,9 @@ class LocalFileSystem(path: Path) : FileSystem {
         if (path == null) return File.listRoots().map { file -> file.path }
 
         val files = path.toFile().listFiles() ?: listOf<File>().toTypedArray()
-        return files.map { file -> file.name }
+        return files
+            .sortedWith(compareBy<File> { !it.isDirectory }.thenBy { it.name })
+            .map { file -> file.name }
     }
 
     private fun getContentType(file: File): String {
