@@ -38,6 +38,7 @@ class MainWindow(private var fileSystem: FileSystem) : JFrame("Best file manager
 
 
         path = JLabel(fileSystem.getFullPath())
+        path.name = "currentPath" // for test purposes
         path.addMouseListener(PathChanger(this))
         pathAndSettingsLayout.add(path, pathConstraints)
 
