@@ -125,51 +125,43 @@ class MainWindow(private var fileSystem: FileSystem) : JFrame("Best file manager
         override fun mouseClicked(evt: MouseEvent) {
             if (evt.clickCount == 2 && parent.fileSystem is LocalFileSystem) { // hate this
                 val editablePath = JTextField(parent.path.text)
-
-                editablePath.addKeyListener(object : KeyAdapter() {
-                    override fun keyReleased(ke: KeyEvent) {
-                        if (ke.keyCode == KeyEvent.VK_ENTER) {
-                            val path = File(editablePath.text)
-
-                            if (!path.isAbsolute || !path.exists()) {
-                                JOptionPane.showMessageDialog(
-                                    null,
-                                    "Invalid path, try again",
-                                    "Error",
-                                    JOptionPane.PLAIN_MESSAGE
-                                )
-                                parent.pathAndSettingsLayout.reloadPath(
-                                    editablePath,
-                                    parent.path,
-                                    parent.pathConstraints
-                                )
-                                return
-                            }
-
-                            parent.path.text = editablePath.text
-                            parent.pathAndSettingsLayout.reloadPath(editablePath, parent.path, parent.pathConstraints)
-
-                            parent.fileSystem = LocalFileSystem(Paths.get(parent.path.text))
-                            parent.fileListModel.refill(parent.fileSystem.getFileList())
-                            parent.fileList.selectedIndex = 0
-                            parent.preview = getComponent(
-                                parent.fileSystem.getPreview(parent.fileListModel[0]),
-                                parent.fileList.size
-                            )
-                            parent.fileListAndPreviewLayout.reloadElement(parent.preview, 1)
-                        }
-                    }
-                })
-
-                parent.pathAndSettingsLayout.reloadPath(parent.path, editablePath, parent.pathConstraints)
+                editablePath.addKeyListener(PathFinalizer(parent, editablePath))
+                parent.reloadPath(parent.path, editablePath)
             }
         }
+    }
 
-        private fun JPanel.reloadPath(oldPath: Component, newPath: Component, c: GridBagConstraints) {
-            this.remove(oldPath)
-            this.add(newPath, c)
-            this.revalidate()
-            this.repaint()
+    private class PathFinalizer(private val parent: MainWindow, private val newPath: JTextField) : KeyAdapter() {
+        override fun keyReleased(ke: KeyEvent) {
+            when (ke.keyCode) {
+                KeyEvent.VK_ESCAPE -> parent.reloadPath(newPath, parent.path)
+                KeyEvent.VK_ENTER -> {
+                    val path = File(newPath.text)
+
+                    if (!path.isAbsolute || !path.exists()) {
+                        JOptionPane.showMessageDialog(null, "Invalid path", "Error", JOptionPane.PLAIN_MESSAGE)
+                        parent.reloadPath(newPath, parent.path)
+                        return
+                    }
+
+                    parent.path.text = newPath.text
+                    parent.reloadPath(newPath, parent.path)
+
+                    parent.fileSystem = LocalFileSystem(Paths.get(parent.path.text))
+                    parent.fileListModel.refill(parent.fileSystem.getFileList())
+                    parent.fileList.selectedIndex = 0
+                    parent.preview =
+                        getComponent(parent.fileSystem.getPreview(parent.fileListModel[0]), parent.fileList.size)
+                    parent.fileListAndPreviewLayout.reloadElement(parent.preview, 1)
+                }
+            }
         }
+    }
+
+    private fun reloadPath(oldPath: Component, newPath: Component) {
+        pathAndSettingsLayout.remove(oldPath)
+        pathAndSettingsLayout.add(newPath, pathConstraints)
+        pathAndSettingsLayout.revalidate()
+        pathAndSettingsLayout.repaint()
     }
 }
