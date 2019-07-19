@@ -30,6 +30,8 @@ class MainWindow(private var fileSystem: FileSystem, ftpClient: FTPClient? = nul
     private var previewWorker = getPreviewWorker()
     private var pathWorker = getPathWorker()
     private var fileListWorker = getFileListWorker()
+    private lateinit var goBackWorker: SwingWorker<String, Nothing>
+    private lateinit var goForwardWorker: SwingWorker<FileSystem?, Nothing>
 
     init {
         val screen = Toolkit.getDefaultToolkit().screenSize
@@ -99,32 +101,15 @@ class MainWindow(private var fileSystem: FileSystem, ftpClient: FTPClient? = nul
     }
 
     private fun goForward() {
-        if (fileList.selectedValue == null) return
-        val child = fileSystem.goForward(fileList.selectedValue)
-
-        if (child == null) {
-            val curPreview = fileSystem.getPreview(fileList.selectedValue)
-            if (curPreview is PreviewData.Remote) {
-                val downloadWindow = DownloadWindow(this, curPreview.inputStream, fileList.selectedValue)
-                downloadWindow.isVisible = true
-            }
-            return
-        }
-
-        fileSystem = child
-        showFileList()
-        showPreview()
-        showPath()
+        if (isPathChanged() || fileList.selectedValue == null) return
+        goForwardWorker = getGoForwardWorker(this)
+        goForwardWorker.execute()
     }
 
     private fun goBack() {
-        val fileName = fileSystem.getCurrentFileName()
-        val parent = fileSystem.goBack() ?: return
-
-        fileSystem = parent
-        showFileList()
-        showPreview(fileName)
-        showPath()
+        if (isPathChanged()) return
+        goBackWorker = getGoBackWorker()
+        goBackWorker.execute()
     }
 
     private fun showPreview(item: String? = null) {
@@ -206,6 +191,11 @@ class MainWindow(private var fileSystem: FileSystem, ftpClient: FTPClient? = nul
     }
 
 
+    private fun isPathChanged(): Boolean {
+        return (::goBackWorker.isInitialized && !goBackWorker.isDone) ||
+                (::goForwardWorker.isInitialized && !goForwardWorker.isDone)
+    }
+
     private fun getPreviewWorker(item: String? = null): SwingWorker<Component, Nothing> {
         return object : SwingWorker<Component, Nothing>() {
 
@@ -260,4 +250,55 @@ class MainWindow(private var fileSystem: FileSystem, ftpClient: FTPClient? = nul
             }
         }
     }
+
+    private fun getGoBackWorker(): SwingWorker<String, Nothing> {
+        return object : SwingWorker<String, Nothing>() {
+
+            override fun doInBackground(): String? {
+                val fileName = fileSystem.getCurrentFileName()
+                fileSystem = fileSystem.goBack() ?: return null
+                return fileName
+            }
+
+            override fun done() {
+                try {
+                    val name = get() ?: return
+                    showFileList()
+                    showPreview(name)
+                    showPath()
+                } catch (e: CancellationException) {
+                }
+            }
+        }
+    }
+
+    private fun getGoForwardWorker(parent: JFrame): SwingWorker<FileSystem?, Nothing> {
+        return object : SwingWorker<FileSystem?, Nothing>() {
+
+            override fun doInBackground(): FileSystem? {
+                val child = fileSystem.goForward(fileList.selectedValue)
+
+                if (child == null) {
+                    val curPreview = fileSystem.getPreview(fileList.selectedValue)
+                    if (curPreview is PreviewData.Remote) {
+                        val downloadWindow = DownloadWindow(parent, curPreview.inputStream, fileList.selectedValue)
+                        downloadWindow.isVisible = true
+                    }
+                }
+                return child
+            }
+
+            override fun done() {
+                try {
+                    fileSystem = get() ?: return
+                    showFileList()
+                    showPreview()
+                    showPath()
+                } catch (e: CancellationException) {
+                }
+            }
+        }
+    }
+
+
 }
