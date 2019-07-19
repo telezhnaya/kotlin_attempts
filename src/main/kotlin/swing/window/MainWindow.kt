@@ -42,12 +42,12 @@ class MainWindow(private var fileSystem: FileSystem) : JFrame("Best file manager
         path.addMouseListener(PathChanger(this))
         pathAndSettingsLayout.add(path, pathConstraints)
 
-        val settingsButton = JButton("FTP settings")
-        settingsButton.addActionListener {
-            val settingsWindow = SettingsWindow(settingsButton.text, this)
-            settingsWindow.isVisible = true
+        val ftpSettingsButton = JButton("FTP settings")
+        ftpSettingsButton.addActionListener {
+            val ftpSettingsWindow = FTPSettingsWindow(ftpSettingsButton.text, this)
+            ftpSettingsWindow.isVisible = true
         }
-        pathAndSettingsLayout.add(settingsButton, createGridBagConstraints(1, 0, 0.0, 0.0))
+        pathAndSettingsLayout.add(ftpSettingsButton, createGridBagConstraints(1, 0, 0.0, 0.0))
         mainLayout.add(pathAndSettingsLayout, createGridBagConstraints(0, 0, 1.0, 0.0))
 
 

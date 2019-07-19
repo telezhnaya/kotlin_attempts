@@ -11,7 +11,7 @@ class LocalFileSystem(path: Path) : FileSystem {
     private var fullPath = path.toAbsolutePath()
 
     override fun goBack(): FileSystem? {
-        val isNewPath = fullPath != null && fullPath != fullPath.parent
+        val isNewPath = fullPath != fullPath?.parent
         fullPath = fullPath?.parent
         return if (isNewPath) this else null
     }

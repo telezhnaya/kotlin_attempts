@@ -65,7 +65,7 @@ class DownloadWindow(parent: JFrame, inputStream: InputStream, fileName: String)
             } catch (e: FileNotFoundException) {
                 error.reloadText("The path does not exist, please try again")
             } catch (e: Exception) {
-                error.reloadText("Sorry, something goes wrong")
+                error.reloadText(e.localizedMessage) // TODO handle big errors
             }
         }
         buttons.add(submit)

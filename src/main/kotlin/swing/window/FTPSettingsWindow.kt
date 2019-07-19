@@ -15,7 +15,10 @@ import java.net.ConnectException
 import javax.swing.*
 
 
-class SettingsWindow(header: String, parent: JFrame) : JFrame(header) {
+const val FTP_PREFIX = "ftp://"
+
+
+class FTPSettingsWindow(header: String, parent: JFrame) : JFrame(header) {
     private val error = JLabel(" ")
 
     init {
@@ -57,10 +60,16 @@ class SettingsWindow(header: String, parent: JFrame) : JFrame(header) {
         submit.addActionListener {
             val client = FTPClient()
 
+            if (!address.text.startsWith(FTP_PREFIX))
+                address.text = FTP_PREFIX + address.text
+
             try {
-                client.connect(address.text)
+                client.connect(address.text.substringAfter(FTP_PREFIX))
             } catch (e: ConnectException) {
                 error.reloadText("Unable to connect to the server")
+                return@addActionListener
+            } catch (e: Exception) {
+                error.reloadText(e.localizedMessage) // TODO handle big errors
                 return@addActionListener
             }
 
