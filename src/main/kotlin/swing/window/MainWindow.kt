@@ -9,6 +9,7 @@ import java.awt.*
 import java.awt.event.*
 import java.io.File
 import java.nio.file.Paths
+import java.util.concurrent.CancellationException
 import javax.swing.*
 
 
@@ -16,13 +17,16 @@ class MainWindow(private var fileSystem: FileSystem, ftpClient: FTPClient? = nul
     JFrame("Best file manager ever (or not)") {
 
     private val pathAndSettingsLayout = JPanel()
-    private val path: JLabel
+    private val path = JLabel()
     private val pathConstraints = createGridBagConstraints(0, 0, 1.0, 0.0)
 
     private val fileListAndPreviewLayout = JPanel()
     private val fileListModel = DefaultListModel<String>()
     private val fileList = JList(fileListModel)
     private var preview: Component
+
+
+    private var previewWorker = getPreviewWorker()
 
     init {
         val screen = Toolkit.getDefaultToolkit().screenSize
@@ -36,8 +40,7 @@ class MainWindow(private var fileSystem: FileSystem, ftpClient: FTPClient? = nul
         pathAndSettingsLayout.layout = GridBagLayout()
         fileListAndPreviewLayout.layout = GridLayout(1, 2, 5, 0)
 
-
-        path = JLabel(fileSystem.getFullPath())
+        path.text = fileSystem.getFullPath()
         path.name = PATH_LABEL
         path.addMouseListener(PathStartChangeListener(this))
         pathAndSettingsLayout.add(path, pathConstraints)
@@ -73,7 +76,7 @@ class MainWindow(private var fileSystem: FileSystem, ftpClient: FTPClient? = nul
         this.selectionMode = ListSelectionModel.SINGLE_SELECTION
 
         this.addListSelectionListener {
-            if (this.selectedIndex != -1) showPreview()
+            showPreview()
         }
 
         this.addMouseListener(object : MouseAdapter() {
@@ -108,9 +111,7 @@ class MainWindow(private var fileSystem: FileSystem, ftpClient: FTPClient? = nul
 
         fileSystem = child
         fileListModel.refill(fileSystem.getFileList())
-        fileList.selectedIndex = 0
-        preview = getComponent(fileSystem.getPreview(fileListModel[0]), fileList.size)
-        fileListAndPreviewLayout.reloadElement(preview, 1)
+        showPreview()
         path.reloadText(fileSystem.getFullPath())
     }
 
@@ -120,14 +121,18 @@ class MainWindow(private var fileSystem: FileSystem, ftpClient: FTPClient? = nul
 
         fileSystem = parent
         fileListModel.refill(fileSystem.getFileList())
-        preview = getComponent(fileSystem.getPreview(fileName), fileList.size)
-        fileListAndPreviewLayout.reloadElement(preview, 1)
+        showPreview(fileName)
         path.reloadText(fileSystem.getFullPath())
     }
 
-    private fun showPreview() {
-        preview = getComponent(fileSystem.getPreview(fileList.selectedValue), fileList.size)
-        fileListAndPreviewLayout.reloadElement(preview, 1)
+    private fun showPreview(item: String? = null) {
+        if (item != null)
+            fileList.setSelectedValue(item, true)
+        if (fileList.selectedIndex == -1)
+            fileList.selectedIndex = 0
+        previewWorker.cancel(true)
+        previewWorker = getPreviewWorker()
+        previewWorker.execute()
     }
 
     private class PathStartChangeListener(private val parent: MainWindow) : MouseAdapter() {
@@ -160,15 +165,12 @@ class MainWindow(private var fileSystem: FileSystem, ftpClient: FTPClient? = nul
                     parent.path.text = newPath.text
                     parent.reloadPath(newPath, parent.path)
 
-                    parent.fileSystem = LocalFileSystem(Paths.get(parent.path.text))
-                    parent.fileListModel.refill(parent.fileSystem.getFileList())
-                    parent.fileList.selectedIndex = 0
-                    parent.preview =
-                        getComponent(parent.fileSystem.getPreview(parent.fileListModel[0]), parent.fileList.size)
-                    parent.fileListAndPreviewLayout.reloadElement(parent.preview, 1)
+                            parent.fileSystem = LocalFileSystem(Paths.get(parent.path.text))
+                            parent.fileListModel.refill(parent.fileSystem.getFileList())
+                            parent.showPreview()
+                        }
+                    }
                 }
-            }
-        }
     }
 
     private fun reloadPath(oldPath: Component, newPath: Component) {
@@ -185,6 +187,24 @@ class MainWindow(private var fileSystem: FileSystem, ftpClient: FTPClient? = nul
             val app = MainWindow(LocalFileSystem(Paths.get("")))
             app.setLocationRelativeTo(null)
             app.isVisible = true
+        }
+    }
+
+
+    private fun getPreviewWorker(): SwingWorker<Component, Nothing> {
+        return object : SwingWorker<Component, Nothing>() {
+
+            override fun doInBackground(): Component {
+                return getComponent(fileSystem.getPreview(fileList.selectedValue), fileList.size)
+            }
+
+            override fun done() {
+                try {
+                    preview = get()
+                    fileListAndPreviewLayout.reloadElement(preview, 1)
+                } catch (e: CancellationException) {
+                }
+            }
         }
     }
 }
