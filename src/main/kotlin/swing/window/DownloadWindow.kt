@@ -1,10 +1,16 @@
 package swing.window
 
+import CANCEL
+import SUBMIT
 import observer.filesystem.LocalFileSystem
 import observer.filesystem.ZipFileSystem
 import swing.createGridBagConstraints
+import swing.initErrorField
 import swing.reloadText
-import java.awt.*
+import java.awt.Dimension
+import java.awt.GridBagLayout
+import java.awt.GridLayout
+import java.awt.Point
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.InputStream
@@ -13,10 +19,10 @@ import javax.swing.*
 
 
 class DownloadWindow(parent: JFrame, inputStream: InputStream, fileName: String) : JFrame("Download the file") {
-    private val error = JLabel(" ")
+    private val error = JTextArea()
 
     init {
-        this.size = Dimension(350, 120)
+        this.size = Dimension(350, 150)
         this.setLocationRelativeTo(null)
 
         val mainContainer = this.contentPane
@@ -29,19 +35,19 @@ class DownloadWindow(parent: JFrame, inputStream: InputStream, fileName: String)
 
         val destination = JTextField()
         mainContainer.add(destination, createGridBagConstraints(0, 1, 1.0, 0.0, 2))
-        error.foreground = Color.RED
+        error.initErrorField()
         mainContainer.add(error, createGridBagConstraints(0, 2, 1.0, 0.0, 2))
 
         val buttons = JPanel()
         buttons.layout = GridLayout(1, 2)
 
-        val cancel = JButton("Cancel")
+        val cancel = JButton(CANCEL)
         cancel.addActionListener {
             this.dispose()
         }
         buttons.add(cancel)
 
-        val submit = JButton("Submit")
+        val submit = JButton(SUBMIT)
         submit.addActionListener {
             if (!File(destination.text).isAbsolute) {
                 error.reloadText("Please enter absolute path")
@@ -65,11 +71,12 @@ class DownloadWindow(parent: JFrame, inputStream: InputStream, fileName: String)
             } catch (e: FileNotFoundException) {
                 error.reloadText("The path does not exist, please try again")
             } catch (e: Exception) {
-                error.reloadText(e.localizedMessage) // TODO handle big errors
+                error.reloadText(e.localizedMessage)
             }
         }
         buttons.add(submit)
 
+        this.getRootPane().defaultButton = submit
         mainContainer.add(buttons, createGridBagConstraints(0, 3, 1.0, 0.0, 2))
     }
 

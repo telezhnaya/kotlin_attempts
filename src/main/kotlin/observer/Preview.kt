@@ -2,7 +2,7 @@ package observer
 
 import java.io.InputStream
 
-sealed class Preview {
+sealed class Preview { // TODO rename
     data class Directory(val paths: List<String>) : Preview()
     data class Image(val inputStream: InputStream) : Preview()
     data class Text(val inputStream: InputStream) : Preview()

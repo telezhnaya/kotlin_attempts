@@ -1,5 +1,7 @@
 package observer.filesystem
 
+import BACK
+import ZIP_EXTENSION
 import observer.FileSystem
 import observer.Preview
 import org.apache.commons.net.ftp.FTPClient
@@ -13,7 +15,7 @@ class FTPFileSystem(private val client: FTPClient) : FileSystem {
     }
 
     override fun goForward(file: String): FileSystem? {
-        if (file == "..") return goBack()
+        if (file == BACK) return goBack()
         return if (client.changeWorkingDirectory(file)) this else null
     }
 
@@ -32,7 +34,7 @@ class FTPFileSystem(private val client: FTPClient) : FileSystem {
         inputStream.use { it.copyTo(tempFile.outputStream()) }
         client.completePendingCommand()
 
-        if (file.endsWith(".zip"))
+        if (file.endsWith(ZIP_EXTENSION))
             return Preview.Remote(tempFile.inputStream())
 
         return LocalFileSystem(tempFile.toPath()).getPreview("")
@@ -51,12 +53,12 @@ class FTPFileSystem(private val client: FTPClient) : FileSystem {
     }
 
     private fun isDirectory(file: String): Boolean {
-        return file == ".." || (client.changeWorkingDirectory(file) && client.changeToParentDirectory())
+        return file == BACK || (client.changeWorkingDirectory(file) && client.changeToParentDirectory())
     }
 
     private fun getFileList(path: String): List<String> {
         return client.listFiles(path)
-            .sortedWith(compareBy<FTPFile> { !it.isDirectory }.thenBy { it.name } )
+            .sortedWith(compareBy<FTPFile> { !it.isDirectory }.thenBy { it.name })
             .map { file -> file.name }
     }
 

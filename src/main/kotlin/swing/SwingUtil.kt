@@ -1,5 +1,7 @@
 package swing
 
+import BACK
+import NO_PREVIEW
 import observer.Preview
 import java.awt.*
 import java.io.BufferedReader
@@ -22,10 +24,10 @@ fun getComponent(preview: Preview, dimension: Dimension): Component {
                 JScrollPane(JTextArea(text))
             }
             is Preview.Remote -> JLabel("Click Enter to extract this file")
-            is Preview.Unhandled -> JLabel("Preview is not supported yet")
+            is Preview.Unhandled -> JLabel(NO_PREVIEW)
         }
     } catch (e: Exception) {
-        JLabel("Preview is not supported yet")
+        JLabel(NO_PREVIEW)
     }
 }
 
@@ -42,9 +44,23 @@ fun JLabel.reloadText(text: String) {
     this.repaint()
 }
 
+fun JTextArea.reloadText(text: String) {
+    this.text = text
+    this.revalidate()
+    this.repaint()
+}
+
+fun JTextArea.initErrorField() {
+    this.foreground = Color.RED
+    this.lineWrap = true
+    this.isEditable = false
+    this.isOpaque = false
+    this.wrapStyleWord = true
+}
+
 fun DefaultListModel<String>.refill(files: List<String>) {
     this.removeAllElements()
-    this.add(0, "..")
+    this.add(0, BACK)
     this.addAll(files)
 }
 

@@ -1,5 +1,7 @@
 package observer.filesystem
 
+import BACK
+import ZIP_EXTENSION
 import observer.FileSystem
 import observer.Preview
 import java.io.File
@@ -18,7 +20,7 @@ class ZipFileSystem(zip: File, private val parent: FileSystem) : FileSystem {
     }
 
     override fun goForward(file: String): FileSystem? {
-        if (file == "..") return goBack()
+        if (file == BACK) return goBack()
         val newFile = File(currentPath).resolve(file).normalize()
 
         val isDirectory = zipFile.getEntry(newFile.path)?.isDirectory == true
@@ -28,14 +30,14 @@ class ZipFileSystem(zip: File, private val parent: FileSystem) : FileSystem {
 
     override fun getPreview(file: String): Preview {
         val preview = File(currentPath).resolve(file).normalize()
-        if (preview.name == "..") return parent.getPreview("")
+        if (preview.name == BACK) return parent.getPreview("")
 
         val entry = zipFile.getEntry(preview.path) ?: return Preview.Unhandled
         if (preview.name.isEmpty() || entry.isDirectory)
             return Preview.Directory(getFileList(preview.path))
 
         val inputStream = zipFile.getInputStream(entry) ?: return Preview.Unhandled
-        if (preview.name.endsWith(".zip"))
+        if (preview.name.endsWith(ZIP_EXTENSION))
             return Preview.Remote(inputStream)
 
         // name of the file should be at least 3 characters length
@@ -65,7 +67,7 @@ class ZipFileSystem(zip: File, private val parent: FileSystem) : FileSystem {
 
         return zipFile.entries().toList()
             .filter { isFileEntryInPath(it) }
-            .sortedWith(compareBy<ZipEntry> { !it.isDirectory }.thenBy { it.name } )
+            .sortedWith(compareBy<ZipEntry> { !it.isDirectory }.thenBy { it.name })
             .map { File(it.name).name }
     }
 }

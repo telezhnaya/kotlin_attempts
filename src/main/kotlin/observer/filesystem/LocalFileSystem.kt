@@ -1,5 +1,7 @@
 package observer.filesystem
 
+import BACK
+import ZIP_EXTENSION
 import observer.FileSystem
 import observer.Preview
 import java.io.File
@@ -17,10 +19,10 @@ class LocalFileSystem(path: Path) : FileSystem {
     }
 
     override fun goForward(file: String): FileSystem? {
-        if (file == "..") return goBack()
+        if (file == BACK) return goBack()
 
         val newPath = fullPath?.resolve(file) ?: Paths.get(file)
-        if (file.endsWith(".zip"))
+        if (file.endsWith(ZIP_EXTENSION))
             return ZipFileSystem(newPath.toFile(), this)
 
         val isNewPath = newPath.toFile().isDirectory
@@ -32,7 +34,7 @@ class LocalFileSystem(path: Path) : FileSystem {
         if (fullPath == null) return Preview.Directory(getFileList())
         val preview = fullPath.resolve(file).toFile() ?: return Preview.Unhandled
 
-        return when (getContentType(preview)) {
+        return when (getContentType(preview)) { // TODO enum?
             "directory" -> Preview.Directory(getFileList(preview.toPath()))
             "image" -> Preview.Image(preview.inputStream())
             "text" -> Preview.Text(preview.inputStream())

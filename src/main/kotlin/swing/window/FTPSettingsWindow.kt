@@ -1,11 +1,14 @@
 package swing.window
 
+import CANCEL
+import FTP_PREFIX
+import SUBMIT
 import observer.filesystem.FTPFileSystem
 import org.apache.commons.net.ftp.FTP
 import org.apache.commons.net.ftp.FTPClient
 import swing.createGridBagConstraints
+import swing.initErrorField
 import swing.reloadText
-import java.awt.Color
 import java.awt.Dimension
 import java.awt.GridBagLayout
 import java.awt.GridLayout
@@ -15,14 +18,11 @@ import java.net.ConnectException
 import javax.swing.*
 
 
-const val FTP_PREFIX = "ftp://"
-
-
 class FTPSettingsWindow(header: String, parent: JFrame) : JFrame(header) {
-    private val error = JLabel(" ")
+    private val error = JTextArea()
 
     init {
-        this.size = Dimension(350, 150)
+        this.size = Dimension(350, 200)
         this.setLocationRelativeTo(null)
 
         val mainContainer = this.contentPane
@@ -31,7 +31,7 @@ class FTPSettingsWindow(header: String, parent: JFrame) : JFrame(header) {
         val settings = JPanel()
         settings.layout = GridBagLayout()
 
-        val address = JTextField()
+        val address = JTextField(FTP_PREFIX)
         settings.add(JLabel("Server address"), createGridBagConstraints(0, 0, 0.0, 0.0))
         settings.add(address, createGridBagConstraints(1, 0, 1.0, 0.0))
 
@@ -44,19 +44,19 @@ class FTPSettingsWindow(header: String, parent: JFrame) : JFrame(header) {
         settings.add(password, createGridBagConstraints(1, 2, 1.0, 0.0))
 
         mainContainer.add(settings, createGridBagConstraints(0, 0, 1.0, 1.0))
-        error.foreground = Color.RED
+        error.initErrorField()
         mainContainer.add(error, createGridBagConstraints(0, 1, 1.0, 0.0, 2))
 
         val buttons = JPanel()
         buttons.layout = GridLayout(1, 2)
 
-        val cancel = JButton("Cancel")
+        val cancel = JButton(CANCEL)
         cancel.addActionListener {
             this.dispose()
         }
         buttons.add(cancel)
 
-        val submit = JButton("Submit")
+        val submit = JButton(SUBMIT)
         submit.addActionListener {
             val client = FTPClient()
 
@@ -69,7 +69,7 @@ class FTPSettingsWindow(header: String, parent: JFrame) : JFrame(header) {
                 error.reloadText("Unable to connect to the server")
                 return@addActionListener
             } catch (e: Exception) {
-                error.reloadText(e.localizedMessage) // TODO handle big errors
+                error.reloadText(e.localizedMessage)
                 return@addActionListener
             }
 
@@ -95,6 +95,7 @@ class FTPSettingsWindow(header: String, parent: JFrame) : JFrame(header) {
         }
         buttons.add(submit)
 
+        this.getRootPane().defaultButton = submit
         mainContainer.add(buttons, createGridBagConstraints(0, 2, 1.0, 0.0, 2))
     }
 }
