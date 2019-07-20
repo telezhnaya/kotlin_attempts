@@ -1,9 +1,9 @@
 package observer.filesystem
 
-import BACK
-import ZIP_EXTENSION
 import observer.FileSystem
-import observer.Preview
+import observer.FileSystem.Companion.BACK
+import observer.FileSystem.Companion.ZIP_EXTENSION
+import observer.PreviewData
 import java.io.File
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
@@ -28,17 +28,17 @@ class ZipFileSystem(zip: File, private val parent: FileSystem) : FileSystem {
         return if (isDirectory) this else null
     }
 
-    override fun getPreview(file: String): Preview {
+    override fun getPreview(file: String): PreviewData {
         val preview = File(currentPath).resolve(file).normalize()
         if (preview.name == BACK) return parent.getPreview("")
 
-        val entry = zipFile.getEntry(preview.path) ?: return Preview.Unhandled
+        val entry = zipFile.getEntry(preview.path) ?: return PreviewData.Unhandled
         if (preview.name.isEmpty() || entry.isDirectory)
-            return Preview.Directory(getFileList(preview.path))
+            return PreviewData.Directory(getFileList(preview.path))
 
-        val inputStream = zipFile.getInputStream(entry) ?: return Preview.Unhandled
+        val inputStream = zipFile.getInputStream(entry) ?: return PreviewData.Unhandled
         if (preview.name.endsWith(ZIP_EXTENSION))
-            return Preview.Remote(inputStream)
+            return PreviewData.Remote(inputStream)
 
         // name of the file should be at least 3 characters length
         val tempFile = File.createTempFile("123", preview.name)

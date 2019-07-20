@@ -1,9 +1,9 @@
 package observer.filesystem
 
-import BACK
-import ZIP_EXTENSION
 import observer.FileSystem
-import observer.Preview
+import observer.FileSystem.Companion.BACK
+import observer.FileSystem.Companion.ZIP_EXTENSION
+import observer.PreviewData
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -30,16 +30,16 @@ class LocalFileSystem(path: Path) : FileSystem {
         return if (isNewPath) this else null
     }
 
-    override fun getPreview(file: String): Preview {
-        if (fullPath == null) return Preview.Directory(getFileList())
-        val preview = fullPath.resolve(file).toFile() ?: return Preview.Unhandled
+    override fun getPreview(file: String): PreviewData {
+        if (fullPath == null) return PreviewData.Directory(getFileList())
+        val preview = fullPath.resolve(file).toFile() ?: return PreviewData.Unhandled
 
         return when (getContentType(preview)) { // TODO enum?
-            "directory" -> Preview.Directory(getFileList(preview.toPath()))
-            "image" -> Preview.Image(preview.inputStream())
-            "text" -> Preview.Text(preview.inputStream())
+            "directory" -> PreviewData.Directory(getFileList(preview.toPath()))
+            "image" -> PreviewData.Image(preview.inputStream())
+            "text" -> PreviewData.Text(preview.inputStream())
             "zip" -> ZipFileSystem(preview, this).getPreview("")
-            else -> Preview.Unhandled
+            else -> PreviewData.Unhandled
         }
     }
 

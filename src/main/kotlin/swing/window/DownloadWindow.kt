@@ -1,13 +1,8 @@
 package swing.window
 
-import CANCEL
-import SUBMIT
-import WINDOW_OFFSET
 import observer.filesystem.LocalFileSystem
 import observer.filesystem.ZipFileSystem
-import swing.createGridBagConstraints
-import swing.initErrorField
-import swing.reloadText
+import swing.*
 import java.awt.Dimension
 import java.awt.GridBagLayout
 import java.awt.GridLayout

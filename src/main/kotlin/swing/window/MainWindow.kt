@@ -1,7 +1,7 @@
 package swing.window
 
 import observer.FileSystem
-import observer.Preview
+import observer.PreviewData
 import observer.filesystem.LocalFileSystem
 import org.apache.commons.net.ftp.FTPClient
 import swing.*
@@ -97,7 +97,7 @@ class MainWindow(private var fileSystem: FileSystem, ftpClient: FTPClient? = nul
 
         if (child == null) {
             val curPreview = fileSystem.getPreview(fileList.selectedValue)
-            if (curPreview is Preview.Remote) {
+            if (curPreview is PreviewData.Remote) {
                 val downloadWindow = DownloadWindow(this, curPreview.inputStream, fileList.selectedValue)
                 downloadWindow.isVisible = true
             }

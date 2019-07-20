@@ -1,14 +1,9 @@
 package swing.window
 
-import CANCEL
-import FTP_PREFIX
-import SUBMIT
 import observer.filesystem.FTPFileSystem
 import org.apache.commons.net.ftp.FTP
 import org.apache.commons.net.ftp.FTPClient
-import swing.createGridBagConstraints
-import swing.initErrorField
-import swing.reloadText
+import swing.*
 import java.awt.Dimension
 import java.awt.GridBagLayout
 import java.awt.GridLayout
@@ -138,5 +133,9 @@ class FTPSettingsWindow(header: String, private val parent: JFrame) : JFrame(hea
             parent.parent.dispose()
             app.isVisible = true
         }
+    }
+
+    private companion object {
+        const val FTP_PREFIX = "ftp://"
     }
 }

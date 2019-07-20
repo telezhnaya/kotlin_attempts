@@ -1,8 +1,7 @@
 package swing
 
-import BACK
-import NO_PREVIEW
-import observer.Preview
+import observer.FileSystem.Companion.BACK
+import observer.PreviewData
 import java.awt.*
 import java.io.BufferedReader
 import javax.imageio.ImageIO
@@ -10,21 +9,26 @@ import javax.swing.*
 import kotlin.math.min
 
 
-fun getComponent(preview: Preview, dimension: Dimension): Component {
+const val CANCEL = "Cancel"
+const val SUBMIT = "Submit"
+const val NO_PREVIEW = "Preview is not supported yet"
+const val WINDOW_OFFSET = 50 // in pixels
+
+fun getComponent(previewData: PreviewData, dimension: Dimension): Component {
     return try {
-        when (preview) {
-            is Preview.Directory -> JScrollPane(JList(preview.paths.toTypedArray()))
-            is Preview.Image -> {
-                val img = preview.inputStream.use { ImageIO.read(it) }
+        when (previewData) {
+            is PreviewData.Directory -> JScrollPane(JList(previewData.paths.toTypedArray()))
+            is PreviewData.Image -> {
+                val img = previewData.inputStream.use { ImageIO.read(it) }
                 val imgDimension = Dimension(img.width, img.height).scale(dimension)
                 JLabel(ImageIcon(img.getScaledInstance(imgDimension.width, imgDimension.height, Image.SCALE_SMOOTH)))
             }
-            is Preview.Text -> {
-                val text = preview.inputStream.bufferedReader().use(BufferedReader::readText)
+            is PreviewData.Text -> {
+                val text = previewData.inputStream.bufferedReader().use(BufferedReader::readText)
                 JScrollPane(JTextArea(text))
             }
-            is Preview.Remote -> JLabel("Click Enter to extract this file")
-            is Preview.Unhandled -> JLabel(NO_PREVIEW)
+            is PreviewData.Remote -> JLabel("Click Enter to extract this file")
+            is PreviewData.Unhandled -> JLabel(NO_PREVIEW)
         }
     } catch (e: Exception) {
         JLabel(NO_PREVIEW)
