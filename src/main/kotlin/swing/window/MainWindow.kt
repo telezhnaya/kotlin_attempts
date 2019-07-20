@@ -39,7 +39,7 @@ class MainWindow(private var fileSystem: FileSystem, ftpClient: FTPClient? = nul
 
         path = JLabel(fileSystem.getFullPath())
         path.name = "currentPath" // for test purposes
-        path.addMouseListener(PathChanger(this))
+        path.addMouseListener(PathStartChangeListener(this))
         pathAndSettingsLayout.add(path, pathConstraints)
 
         val ftpSettingsButton = JButton("FTP settings")
@@ -51,7 +51,7 @@ class MainWindow(private var fileSystem: FileSystem, ftpClient: FTPClient? = nul
 
         if (ftpClient != null) {
             val closeFtpButton = JButton("Back to local")
-            closeFtpButton.addActionListener(FTPDestroyer(this, ftpClient))
+            closeFtpButton.addActionListener(FTPCloseListener(this, ftpClient))
             pathAndSettingsLayout.add(closeFtpButton, createGridBagConstraints(2, 0, 0.0, 0.0))
         }
 
@@ -128,17 +128,21 @@ class MainWindow(private var fileSystem: FileSystem, ftpClient: FTPClient? = nul
         fileListAndPreviewLayout.reloadElement(preview, 1)
     }
 
-    private class PathChanger(private val parent: MainWindow) : MouseAdapter() {
+    private class PathStartChangeListener(private val parent: MainWindow) : MouseAdapter() {
         override fun mouseClicked(evt: MouseEvent) {
             if (evt.clickCount == 2 && parent.fileSystem is LocalFileSystem) { // hate this
                 val editablePath = JTextField(parent.path.text)
-                editablePath.addKeyListener(PathFinalizer(parent, editablePath))
+                editablePath.addKeyListener(PathFinishChangeListener(parent, editablePath))
                 parent.reloadPath(parent.path, editablePath)
             }
         }
     }
 
-    private class PathFinalizer(private val parent: MainWindow, private val newPath: JTextField) : KeyAdapter() {
+    private class PathFinishChangeListener(
+        private val parent: MainWindow,
+        private val newPath: JTextField
+    ) : KeyAdapter() {
+
         override fun keyReleased(ke: KeyEvent) {
             when (ke.keyCode) {
                 KeyEvent.VK_ESCAPE -> parent.reloadPath(newPath, parent.path)
@@ -172,7 +176,7 @@ class MainWindow(private var fileSystem: FileSystem, ftpClient: FTPClient? = nul
         pathAndSettingsLayout.repaint()
     }
 
-    private class FTPDestroyer(private val parent: JFrame, private val client: FTPClient) : ActionListener {
+    private class FTPCloseListener(private val parent: JFrame, private val client: FTPClient) : ActionListener {
         override fun actionPerformed(p0: ActionEvent?) {
             client.disconnect()
             parent.dispose()

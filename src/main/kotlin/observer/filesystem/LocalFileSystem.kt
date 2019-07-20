@@ -34,11 +34,16 @@ class LocalFileSystem(path: Path) : FileSystem {
         if (fullPath == null) return PreviewData.Directory(getFileList())
         val preview = fullPath.resolve(file).toFile() ?: return PreviewData.Unhandled
 
-        return when (getContentType(preview)) { // TODO enum?
-            "directory" -> PreviewData.Directory(getFileList(preview.toPath()))
+        if (preview.isDirectory)
+            return PreviewData.Directory(getFileList(preview.toPath()))
+        if (preview.name.endsWith(".kt") || preview.name.endsWith(".kts"))
+            return PreviewData.Text(preview.inputStream())
+        if (preview.name.endsWith(".zip"))
+            return ZipFileSystem(preview, this).getPreview("")
+
+        return when (Files.probeContentType(preview.toPath())?.substringBefore('/')) {
             "image" -> PreviewData.Image(preview.inputStream())
             "text" -> PreviewData.Text(preview.inputStream())
-            "zip" -> ZipFileSystem(preview, this).getPreview("")
             else -> PreviewData.Unhandled
         }
     }
@@ -62,13 +67,5 @@ class LocalFileSystem(path: Path) : FileSystem {
         return files
             .sortedWith(compareBy<File> { !it.isDirectory }.thenBy { it.name })
             .map { file -> file.name }
-    }
-
-    private fun getContentType(file: File): String {
-        // main part of the whole project, probeContentType does not know about Kotlin still
-        if (file.name.endsWith(".kt") || file.name.endsWith(".kts")) return "text"
-        if (file.isDirectory) return "directory"
-        if (file.name.endsWith(".zip")) return "zip" // probeContentType gives application/zip
-        return Files.probeContentType(file.toPath())?.substringBefore('/') ?: "unknown"
     }
 }
