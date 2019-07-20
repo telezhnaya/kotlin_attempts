@@ -11,6 +11,7 @@ import java.io.File
 import java.nio.file.Paths
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ExecutionException
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.*
 
 
@@ -20,6 +21,7 @@ class MainWindow(private var fileSystem: FileSystem, ftpClient: FTPClient? = nul
     private val pathAndSettingsLayout = JPanel()
     private val path = JLabel()
     private val pathConstraints = createGridBagConstraints(0, 0, 1.0, 0.0)
+    private val previewStatusLabel = JLabel()
 
     private val fileListAndPreviewLayout = JPanel()
     private val fileListModel = DefaultListModel<String>()
@@ -32,6 +34,8 @@ class MainWindow(private var fileSystem: FileSystem, ftpClient: FTPClient? = nul
     private var fileListWorker = getFileListWorker()
     private lateinit var goBackWorker: SwingWorker<String, Nothing>
     private lateinit var goForwardWorker: SwingWorker<FileSystem?, Nothing>
+
+    private val pathChangeInProgress = AtomicBoolean(false)
 
     init {
         val screen = Toolkit.getDefaultToolkit().screenSize
@@ -49,6 +53,7 @@ class MainWindow(private var fileSystem: FileSystem, ftpClient: FTPClient? = nul
         path.name = PATH_LABEL
         path.addMouseListener(PathStartChangeListener(this))
         pathAndSettingsLayout.add(path, pathConstraints)
+        pathAndSettingsLayout.add(previewStatusLabel, createGridBagConstraints(1, 0, 0.0, 0.0))
 
         val ftpSettingsButton = JButton("FTP settings")
         ftpSettingsButton.name = FTP_SETTINGS_BUTTON
@@ -56,12 +61,12 @@ class MainWindow(private var fileSystem: FileSystem, ftpClient: FTPClient? = nul
             val ftpSettingsWindow = FTPSettingsWindow(ftpSettingsButton.text, this)
             ftpSettingsWindow.isVisible = true
         }
-        pathAndSettingsLayout.add(ftpSettingsButton, createGridBagConstraints(1, 0, 0.0, 0.0))
+        pathAndSettingsLayout.add(ftpSettingsButton, createGridBagConstraints(2, 0, 0.0, 0.0))
 
         if (ftpClient != null) {
             val closeFtpButton = JButton("Back to local")
             closeFtpButton.addActionListener(FTPCloseListener(this, ftpClient))
-            pathAndSettingsLayout.add(closeFtpButton, createGridBagConstraints(2, 0, 0.0, 0.0))
+            pathAndSettingsLayout.add(closeFtpButton, createGridBagConstraints(3, 0, 0.0, 0.0))
         }
 
         mainLayout.add(pathAndSettingsLayout, createGridBagConstraints(0, 0, 1.0, 0.0))
@@ -101,19 +106,21 @@ class MainWindow(private var fileSystem: FileSystem, ftpClient: FTPClient? = nul
     }
 
     private fun goForward() {
-        if (isPathChanged() || fileList.selectedValue == null) return
+        if (fileList.selectedValue == null) return
+        if (!pathChangeInProgress.compareAndSet(false, true)) return
         goForwardWorker = getGoForwardWorker(this)
         goForwardWorker.execute()
     }
 
     private fun goBack() {
-        if (isPathChanged()) return
+        if (!pathChangeInProgress.compareAndSet(false, true)) return
         goBackWorker = getGoBackWorker()
         goBackWorker.execute()
     }
 
     private fun showPreview(item: String? = null) {
         previewWorker.cancel(true)
+        previewStatusLabel.reloadText("[Loading preview]")
         previewWorker = getPreviewWorker(item)
         previewWorker.execute()
     }
@@ -165,12 +172,12 @@ class MainWindow(private var fileSystem: FileSystem, ftpClient: FTPClient? = nul
                     parent.path.text = newPath.text
                     parent.reloadPath(newPath, parent.path)
 
-                            parent.fileSystem = LocalFileSystem(Paths.get(parent.path.text))
-                            parent.showFileList()
-                            parent.showPreview()
-                        }
-                    }
+                    parent.fileSystem = LocalFileSystem(Paths.get(parent.path.text))
+                    parent.showFileList()
+                    parent.showPreview()
                 }
+            }
+        }
     }
 
     private fun reloadPath(oldPath: Component, newPath: Component) {
@@ -188,12 +195,6 @@ class MainWindow(private var fileSystem: FileSystem, ftpClient: FTPClient? = nul
             app.setLocationRelativeTo(null)
             app.isVisible = true
         }
-    }
-
-
-    private fun isPathChanged(): Boolean {
-        return (::goBackWorker.isInitialized && !goBackWorker.isDone) ||
-                (::goForwardWorker.isInitialized && !goForwardWorker.isDone)
     }
 
     private fun getPreviewWorker(item: String? = null): SwingWorker<Component, Nothing> {
@@ -214,6 +215,8 @@ class MainWindow(private var fileSystem: FileSystem, ftpClient: FTPClient? = nul
                     fileListAndPreviewLayout.reloadElement(preview, 1)
                 } catch (e: CancellationException) {
                 } catch (e: ExecutionException) {
+                } finally {
+                    previewStatusLabel.reloadText("")
                 }
             }
         }
@@ -267,6 +270,8 @@ class MainWindow(private var fileSystem: FileSystem, ftpClient: FTPClient? = nul
                     showPreview(name)
                     showPath()
                 } catch (e: CancellationException) {
+                } finally {
+                    pathChangeInProgress.set(false)
                 }
             }
         }
@@ -295,6 +300,8 @@ class MainWindow(private var fileSystem: FileSystem, ftpClient: FTPClient? = nul
                     showPreview()
                     showPath()
                 } catch (e: CancellationException) {
+                } finally {
+                    pathChangeInProgress.set(false)
                 }
             }
         }
