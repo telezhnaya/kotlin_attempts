@@ -2,6 +2,7 @@ package swing.window
 
 import CANCEL
 import SUBMIT
+import WINDOW_OFFSET
 import observer.filesystem.LocalFileSystem
 import observer.filesystem.ZipFileSystem
 import swing.createGridBagConstraints
@@ -62,8 +63,7 @@ class DownloadWindow(parent: JFrame, inputStream: InputStream, fileName: String)
                         LocalFileSystem(Paths.get(destination.text))
                     )
                 )
-                val prevLocation = parent.location
-                app.location = Point(prevLocation.x + 50, prevLocation.y + 50)
+                app.location = Point(parent.location.x + WINDOW_OFFSET, parent.location.y + WINDOW_OFFSET)
                 this.dispose()
                 app.isVisible = true
             } catch (e: FileAlreadyExistsException) {

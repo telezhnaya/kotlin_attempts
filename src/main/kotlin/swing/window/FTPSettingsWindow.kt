@@ -81,7 +81,7 @@ class FTPSettingsWindow(header: String, parent: JFrame) : JFrame(header) {
             }
 
             client.setFileType(FTP.BINARY_FILE_TYPE)
-            val app = MainWindow(FTPFileSystem(client))
+            val app = MainWindow(FTPFileSystem(client), client)
 
             app.addWindowListener(object : WindowAdapter() {
                 override fun windowClosing(e: WindowEvent) {

@@ -3,18 +3,18 @@ package swing.window
 import observer.FileSystem
 import observer.Preview
 import observer.filesystem.LocalFileSystem
+import org.apache.commons.net.ftp.FTPClient
 import swing.*
 import java.awt.*
-import java.awt.event.KeyAdapter
-import java.awt.event.KeyEvent
-import java.awt.event.MouseAdapter
-import java.awt.event.MouseEvent
+import java.awt.event.*
 import java.io.File
 import java.nio.file.Paths
 import javax.swing.*
 
 
-class MainWindow(private var fileSystem: FileSystem) : JFrame("Best file manager ever (or not)") {
+class MainWindow(private var fileSystem: FileSystem, ftpClient: FTPClient? = null) :
+    JFrame("Best file manager ever (or not)") {
+
     private val pathAndSettingsLayout = JPanel()
     private val path: JLabel
     private val pathConstraints = createGridBagConstraints(0, 0, 1.0, 0.0)
@@ -48,6 +48,13 @@ class MainWindow(private var fileSystem: FileSystem) : JFrame("Best file manager
             ftpSettingsWindow.isVisible = true
         }
         pathAndSettingsLayout.add(ftpSettingsButton, createGridBagConstraints(1, 0, 0.0, 0.0))
+
+        if (ftpClient != null) {
+            val closeFtpButton = JButton("Back to local")
+            closeFtpButton.addActionListener(FTPDestroyer(this, ftpClient))
+            pathAndSettingsLayout.add(closeFtpButton, createGridBagConstraints(2, 0, 0.0, 0.0))
+        }
+
         mainLayout.add(pathAndSettingsLayout, createGridBagConstraints(0, 0, 1.0, 0.0))
 
 
@@ -163,5 +170,15 @@ class MainWindow(private var fileSystem: FileSystem) : JFrame("Best file manager
         pathAndSettingsLayout.add(newPath, pathConstraints)
         pathAndSettingsLayout.revalidate()
         pathAndSettingsLayout.repaint()
+    }
+
+    private class FTPDestroyer(private val parent: JFrame, private val client: FTPClient) : ActionListener {
+        override fun actionPerformed(p0: ActionEvent?) {
+            client.disconnect()
+            parent.dispose()
+            val app = MainWindow(LocalFileSystem(Paths.get("")))
+            app.setLocationRelativeTo(null)
+            app.isVisible = true
+        }
     }
 }
