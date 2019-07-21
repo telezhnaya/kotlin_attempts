@@ -38,9 +38,12 @@ class FTPSettingsWindow(header: String, private val parent: JFrame) : JFrame(hea
         settings.add(address, createGridBagConstraints(1, 0, 1.0, 0.0))
 
         anonymous.addItemListener(AnonymousSelection(this))
+        anonymous.name = ANONYMOUS_CHECKBOX
         settings.add(anonymous, createGridBagConstraints(0, 1, 1.0, 0.0, 2))
 
+        userLabel.name = USERNAME_LABEL
         settings.add(userLabel, createGridBagConstraints(0, 2, 0.0, 0.0))
+        user.name = USERNAME_TEXT_FIELD
         settings.add(user, createGridBagConstraints(1, 2, 1.0, 0.0))
 
         settings.add(passwordLabel, createGridBagConstraints(0, 3, 0.0, 0.0))
@@ -54,6 +57,7 @@ class FTPSettingsWindow(header: String, private val parent: JFrame) : JFrame(hea
         buttons.layout = GridLayout(1, 2)
 
         val cancel = JButton(CANCEL)
+        cancel.name = CANCEL_BUTTON
         cancel.addActionListener { this.dispose() }
         buttons.add(cancel)
 

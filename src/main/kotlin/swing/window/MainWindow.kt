@@ -38,11 +38,12 @@ class MainWindow(private var fileSystem: FileSystem, ftpClient: FTPClient? = nul
 
 
         path = JLabel(fileSystem.getFullPath())
-        path.name = "currentPath" // for test purposes
+        path.name = PATH_LABEL
         path.addMouseListener(PathStartChangeListener(this))
         pathAndSettingsLayout.add(path, pathConstraints)
 
         val ftpSettingsButton = JButton("FTP settings")
+        ftpSettingsButton.name = FTP_SETTINGS_BUTTON
         ftpSettingsButton.addActionListener {
             val ftpSettingsWindow = FTPSettingsWindow(ftpSettingsButton.text, this)
             ftpSettingsWindow.isVisible = true
@@ -59,6 +60,7 @@ class MainWindow(private var fileSystem: FileSystem, ftpClient: FTPClient? = nul
 
 
         fileListModel.refill(fileSystem.getFileList())
+        fileList.name = FILE_JLIST
         fileList.init()
         fileListAndPreviewLayout.add(JScrollPane(fileList))
 

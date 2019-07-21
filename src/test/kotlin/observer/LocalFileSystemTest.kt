@@ -1,27 +1,10 @@
 package observer
 
-import observer.filesystem.LocalFileSystem
-import org.junit.After
-import org.junit.Before
+import TestBase
 import org.junit.Test
-import org.junit.rules.TemporaryFolder
 
 
-internal class LocalFileSystemTest {
-    private val rootDir = TemporaryFolder()
-    private lateinit var fileSystem: FileSystem
-
-    @Before
-    fun setUp() {
-        rootDir.create()
-        rootDir.newFile(FILE_JPG)
-        rootDir.newFile(FILE_TXT)
-        rootDir.newFile(FILE_UNTYPED)
-        rootDir.newFolder(SUB_DIR)
-
-        fileSystem = LocalFileSystem(rootDir.root.toPath())
-    }
-
+class LocalFileSystemTest : TestBase() {
     @Test
     fun checkCurrentFileName() {
         assert(fileSystem.getCurrentFileName() == rootDir.root.name)
@@ -84,18 +67,5 @@ internal class LocalFileSystemTest {
         this.checkGoToRoot()
         assert(fileSystem.getCurrentFileName() == "")
         assert(fileSystem.getFileList().isNotEmpty())
-    }
-
-    @After
-    fun tearDown() {
-        rootDir.delete()
-    }
-
-    companion object {
-        const val SUB_DIR = "sub_dir"
-        const val FILE_JPG = "root_file1.jpg"
-        const val FILE_TXT = "root_file2.txt"
-        const val FILE_UNTYPED = "root_file3"
-        const val FILE_NOT_EXIST = "12345"
     }
 }

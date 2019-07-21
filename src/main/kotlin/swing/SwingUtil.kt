@@ -15,7 +15,7 @@ const val NO_PREVIEW = "Preview is not supported yet"
 const val WINDOW_OFFSET = 50 // in pixels
 
 fun getComponent(previewData: PreviewData, dimension: Dimension): Component {
-    return try {
+    val component: Component = try {
         when (previewData) {
             is PreviewData.Directory -> JScrollPane(JList(previewData.paths.toTypedArray()))
             is PreviewData.Image -> {
@@ -33,6 +33,8 @@ fun getComponent(previewData: PreviewData, dimension: Dimension): Component {
     } catch (e: Exception) {
         JLabel(NO_PREVIEW)
     }
+    component.name = PREVIEW_COMPONENT
+    return component
 }
 
 fun Dimension.scale(boundary: Dimension): Dimension {
@@ -96,3 +98,13 @@ fun createGridBagConstraints(
         0
     )
 }
+
+// ------- names of swing objects for testing purposes -------
+const val PATH_LABEL = "full path label"
+const val FTP_SETTINGS_BUTTON = "FTP settings button"
+const val FILE_JLIST = "List of all directories and files"
+const val PREVIEW_COMPONENT = "Component with the preview (type could be different)"
+const val ANONYMOUS_CHECKBOX = "Anonymous checkbox"
+const val CANCEL_BUTTON = "Cancel button"
+const val USERNAME_LABEL = "Username label"
+const val USERNAME_TEXT_FIELD = "Username text field"
