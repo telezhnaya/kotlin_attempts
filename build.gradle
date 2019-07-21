@@ -19,6 +19,9 @@ dependencies {
 
     // https://mvnrepository.com/artifact/org.easytesting/fest-swing
     compile group: 'org.easytesting', name: 'fest-swing', version: '1.2.1'
+
+    // https://mvnrepository.com/artifact/co.unruly/junit-rules
+    compile group: 'co.unruly', name: 'junit-rules', version: '1.0'
 }
 
 compileKotlin {
