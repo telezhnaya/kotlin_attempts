@@ -9,7 +9,7 @@ open class TestBase {
     lateinit var fileSystem: FileSystem
 
     @Before
-    fun setUp() {
+    open fun setUp() {
         rootDir.create()
         rootDir.newFile(FILE_JPG)
         rootDir.newFile(FILE_TXT)
@@ -20,7 +20,7 @@ open class TestBase {
     }
 
     @After
-    fun tearDown() {
+    open fun tearDown() {
         rootDir.delete()
     }
 

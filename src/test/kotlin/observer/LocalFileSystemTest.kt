@@ -6,46 +6,48 @@ import org.junit.Test
 
 class LocalFileSystemTest : TestBase() {
     @Test
-    fun checkCurrentFileName() {
+    fun `getCurrentFileName() gives correct name`() {
         assert(fileSystem.getCurrentFileName() == rootDir.root.name)
     }
 
     @Test
-    fun checkFullPath() {
+    fun `getFullPath() gives correct path`() {
         assert(fileSystem.getFullPath() == rootDir.root.absolutePath)
     }
 
     @Test
-    fun checkFileListOrder() {
+    fun `getFileList() gives all needed files in right order`() {
         assert(fileSystem.getFileList() == listOf(SUB_DIR, FILE_JPG, FILE_TXT, FILE_UNTYPED))
     }
 
     @Test
-    fun checkGoForward() {
+    fun `goForward() changes current directory to chosen one`() {
         fileSystem = fileSystem.goForward(SUB_DIR)!!
         assert(fileSystem.getCurrentFileName() == SUB_DIR)
     }
 
     @Test
-    fun checkFullPathChanged() {
-        this.checkGoForward()
+    fun `full path changed after goForward()`() {
+        this.`goForward() changes current directory to chosen one`()
         assert(fileSystem.getFullPath() == rootDir.root.resolve(SUB_DIR).absolutePath)
     }
 
     @Test
-    fun shouldNotGoForwardToFile() {
+    fun `goForward(notADirectory) does not change current directory`() {
+        val currentPath = fileSystem.getFullPath()
         assert(fileSystem.goForward(FILE_JPG) == null)
+        assert(currentPath == fileSystem.getFullPath())
     }
 
     @Test
-    fun checkGoBack() {
-        this.checkGoForward()
+    fun `goBack() changes directory to parent's one`() {
+        this.`goForward() changes current directory to chosen one`()
         val root = fileSystem.goBack()!!
         assert(root.getCurrentFileName() == rootDir.root.name)
     }
 
     @Test
-    fun checkPreviewDataTypes() {
+    fun `getPreview() gives correct type of output`() {
         assert(fileSystem.getPreview() is PreviewData.Directory)
         assert(fileSystem.getPreview(FILE_TXT) is PreviewData.Text)
         assert(fileSystem.getPreview(FILE_JPG) is PreviewData.Image)
@@ -56,15 +58,22 @@ class LocalFileSystemTest : TestBase() {
     }
 
     @Test
-    fun checkGoToRoot() {
+    fun `goBack() reaches root and stops after it`() {
+        var path = fileSystem.getFullPath()
         while (fileSystem.goBack() != null) {
+            val current = fileSystem.getFullPath()
+            assert(path.startsWith(current))
+            assert(path != current)
+            path = current
         }
+        assert(path.isEmpty())
         assert(fileSystem.goBack() == null)
+        assert(fileSystem.getFullPath().isEmpty())
     }
 
     @Test
-    fun checkRootListFiles() {
-        this.checkGoToRoot()
+    fun `file list is not empty after reaching root`() {
+        this.`goBack() reaches root and stops after it`()
         assert(fileSystem.getCurrentFileName() == "")
         assert(fileSystem.getFileList().isNotEmpty())
     }

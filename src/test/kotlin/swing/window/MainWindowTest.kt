@@ -1,50 +1,44 @@
 package swing.window
 
 import TestBase
-import TestBase.Companion.FILE_CONTENTS
-import TestBase.Companion.FILE_TXT
-import TestBase.Companion.FILE_UNTYPED
-import TestBase.Companion.SUB_DIR
-import observer.FileSystem
 import observer.FileSystem.Companion.BACK
-import org.fest.swing.finder.WindowFinder
 import org.fest.swing.fixture.FrameFixture
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
-import swing.*
+import swing.FILE_JLIST
+import swing.NO_PREVIEW
+import swing.PATH_LABEL
+import swing.PREVIEW_COMPONENT
 import java.awt.event.KeyEvent
 import javax.swing.JTextArea
 
 
-class MainWindowTest {
-    private val testBase = TestBase()
-    private lateinit var fileSystem: FileSystem
+class MainWindowTest : TestBase() {
     private lateinit var window: FrameFixture
 
     @Before
-    fun setUp() {
-        testBase.setUp()
-        fileSystem = testBase.fileSystem
+    override fun setUp() {
+        super.setUp()
         window = FrameFixture(MainWindow(fileSystem))
         window.show()
     }
 
     @Test
-    fun pathLabelShouldShowCorrectPath() {
-        assert(window.label(PATH_LABEL).text() == testBase.rootDir.root.absolutePath)
+    fun `Real current path and path in label are the same`() {
+        assert(window.label(PATH_LABEL).text() == rootDir.root.absolutePath)
     }
 
     @Test
-    fun clickOnItemShouldShowPreview() {
+    fun `Click on item shows corresponding preview`() {
         window.list(FILE_JLIST).item(FILE_UNTYPED).click()
         assert(window.label(PREVIEW_COMPONENT).text() == NO_PREVIEW)
     }
 
     @Test
-    fun textPreviewShouldOpen() {
+    fun `Preview of text files is shown fine`() {
         // File is empty now, let's fill it with something
-        val file = testBase.rootDir.root.resolve(FILE_TXT)
+        val file = rootDir.root.resolve(FILE_TXT)
         file.writeText(FILE_CONTENTS)
 
         window.list(FILE_JLIST).item(FILE_TXT).click()
@@ -54,7 +48,7 @@ class MainWindowTest {
     }
 
     @Test
-    fun goBackShouldChangePathLabel() {
+    fun `Path changes to parent when left arrow is pressed`() {
         val path = window.label(PATH_LABEL).text()
 
         window.list(FILE_JLIST).pressAndReleaseKeys(KeyEvent.VK_LEFT)
@@ -65,7 +59,7 @@ class MainWindowTest {
     }
 
     @Test
-    fun goForwardShouldChangeFileList() {
+    fun `File list changes when right arrow is pressed`() {
         val files = window.list(FILE_JLIST).contents()
 
         window.list(FILE_JLIST).selectItem(SUB_DIR)
@@ -76,36 +70,16 @@ class MainWindowTest {
     }
 
     @Test
-    fun fileListShowCorrectListWithBackOption() {
-        this.goForwardShouldChangeFileList()
+    fun `File list correctly shows empty directory`() {
+        this.`File list changes when right arrow is pressed`()
         val filesAfterClick = window.list(FILE_JLIST).contents()
 
         assert(filesAfterClick!!.contentEquals(listOf(BACK).toTypedArray()))
     }
 
-    @Test
-    fun cancelShouldCloseSettingsWindow() {
-        window.button(FTP_SETTINGS_BUTTON).click()
-        val settings = WindowFinder.findFrame(FTPSettingsWindow::class.java).using(window.robot)
-        settings.requireVisible()
-        settings.button(CANCEL_BUTTON).click()
-        settings.requireNotVisible()
-    }
-
-    @Test
-    fun anonymousCheckBoxShouldDisableUsernameLabelAndField() {
-        window.button(FTP_SETTINGS_BUTTON).click()
-        val settings = WindowFinder.findFrame(FTPSettingsWindow::class.java).using(window.robot)
-        settings.label(USERNAME_LABEL).requireEnabled()
-        settings.textBox(USERNAME_TEXT_FIELD).requireEnabled()
-        settings.checkBox(ANONYMOUS_CHECKBOX).check()
-        settings.label(USERNAME_LABEL).requireDisabled()
-        settings.textBox(USERNAME_TEXT_FIELD).requireDisabled()
-    }
-
     @After
-    fun tearDown() {
+    override fun tearDown() {
+        super.tearDown()
         window.cleanUp()
-        testBase.tearDown()
     }
 }
