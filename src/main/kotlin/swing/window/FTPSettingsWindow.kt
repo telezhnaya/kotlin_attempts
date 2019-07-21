@@ -51,6 +51,7 @@ class FTPSettingsWindow(header: String, private val parent: JFrame) : JFrame(hea
 
         mainContainer.add(settings, createGridBagConstraints(0, 0, 1.0, 1.0))
         error.initErrorField()
+        error.name = SETTINGS_ERROR_LABEL
         mainContainer.add(error, createGridBagConstraints(0, 1, 1.0, 0.0, 2))
 
         val buttons = JPanel()
@@ -62,6 +63,7 @@ class FTPSettingsWindow(header: String, private val parent: JFrame) : JFrame(hea
         buttons.add(cancel)
 
         val submit = JButton(SUBMIT)
+        submit.name = SUBMIT_BUTTON
         submit.addActionListener(Connection(this))
         buttons.add(submit)
 

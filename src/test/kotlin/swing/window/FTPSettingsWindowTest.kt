@@ -38,6 +38,13 @@ class FTPSettingsWindowTest : TestBase() {
         settings.textBox(USERNAME_TEXT_FIELD).requireDisabled()
     }
 
+    @Test
+    fun `Settings window does not close and shows error after submitting empty input`() {
+        settings.button(SUBMIT_BUTTON).click()
+        settings.requireVisible()
+        assert(settings.textBox(SETTINGS_ERROR_LABEL).text().isNotEmpty())
+    }
+
     @After
     override fun tearDown() {
         super.tearDown()
